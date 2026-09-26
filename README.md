@@ -7,21 +7,16 @@
 <p align="center"><strong>Программа, которая одной кнопкой открывает Discord, YouTube и другие сервисы на Windows.</strong></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord">
-  <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube">
-  <img src="https://img.shields.io/badge/Telegram-2AABEE?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram">
+  <a href="https://github.com/RaccoonLaptop/Aeroway/releases/latest"><img alt="Версия" src="https://img.shields.io/github/v/release/RaccoonLaptop/Aeroway?style=for-the-badge&labelColor=12151c&color=e0b240&display_name=release&label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F"></a>
+  <a href="https://github.com/RaccoonLaptop/Aeroway/releases"><img alt="Скачиваний" src="https://img.shields.io/github/downloads/RaccoonLaptop/Aeroway/total?style=for-the-badge&labelColor=12151c&color=34D399&label=%D1%81%D0%BA%D0%B0%D1%87%D0%B8%D0%B2%D0%B0%D0%BD%D0%B8%D0%B9"></a>
+  <a href="https://github.com/RaccoonLaptop/Aeroway/stargazers"><img alt="Звёзды" src="https://img.shields.io/github/stars/RaccoonLaptop/Aeroway?style=for-the-badge&labelColor=12151c&color=e0b240&label=%D0%B7%D0%B2%D1%91%D0%B7%D0%B4%D1%8B"></a>
+  <a href="https://t.me/AerowayUI"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-AerowayUI-2AABEE?style=for-the-badge&labelColor=12151c&logo=telegram&logoColor=white"></a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.0-e0b240" alt="Версия 2.0.0">
-  <a href="https://github.com/RaccoonLaptop/Aeroway/stargazers"><img src="https://img.shields.io/github/stars/RaccoonLaptop/Aeroway?style=flat-square&label=stars&color=e0b240" alt="Звёзды"></a>
-  <a href="https://t.me/AerowayUI"><img src="https://img.shields.io/badge/Telegram-t.me%2FAerowayUI-2AABEE?style=flat-square&logo=telegram&logoColor=white" alt="Telegram"></a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/RaccoonLaptop/Aeroway/releases/latest"><img src="https://img.shields.io/badge/%D0%A1%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C-Aeroway--Setup.exe-e0b240?style=for-the-badge&logo=windows&logoColor=050b1b" alt="Скачать"></a>
-  <a href="https://raccoonlaptop.github.io/Aeroway/"><img src="https://img.shields.io/badge/%D0%94%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F-%D1%80%D1%83%D0%BA%D0%BE%D0%B2%D0%BE%D0%B4%D1%81%D1%82%D0%B2%D0%BE-0d2240?style=for-the-badge" alt="Документация"></a>
-  <a href="https://raccoonlaptop.github.io/Aeroway/donate.html"><img src="https://img.shields.io/badge/%D0%94%D0%BE%D0%BD%D0%B0%D1%82-%D0%AEKassa-e0b240?style=for-the-badge" alt="Донат"></a>
+  <a href="https://github.com/RaccoonLaptop/Aeroway/releases/latest"><img alt="Скачать последнюю версию" src="https://img.shields.io/badge/%D0%A1%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C%20%D0%BF%D0%BE%D1%81%D0%BB%D0%B5%D0%B4%D0%BD%D1%8E%D1%8E%20%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8E-e0b240?style=for-the-badge&logo=github&logoColor=050b1b"></a>
+  &nbsp;
+  <a href="https://raccoonlaptop.github.io/Aeroway/"><img alt="Документация" src="https://img.shields.io/badge/%D0%94%D0%BE%D0%BA%D1%83%D0%BC%D0%B5%D0%BD%D1%82%D0%B0%D1%86%D0%B8%D1%8F-12151c?style=for-the-badge&logo=readthedocs&logoColor=e0b240"></a>
 </p>
 
 Удобная оболочка для конфигов [Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube) и движка [zapret](https://github.com/bol-van/zapret) (`winws`). Не нужно разбираться в командной строке: выбрали стратегию и нажали **Запустить**.

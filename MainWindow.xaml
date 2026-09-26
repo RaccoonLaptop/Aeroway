@@ -90,27 +90,25 @@
                                 </Border>
                             </StackPanel>
 
-                            <StackPanel x:Name="NavPanel" DockPanel.Dock="Top"/>
+                            <StackPanel x:Name="ExternalLinksPanel" DockPanel.Dock="Bottom" Margin="0,12,0,0"/>
 
-                            <StackPanel DockPanel.Dock="Bottom"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Bottom"
-                                        Margin="0,12,0,0">
-                                <Button x:Name="BgSwitchBtn"
-                                        Style="{StaticResource SecondaryButton}"
-                                        FontSize="11"
-                                        Padding="10,4"
-                                        HorizontalAlignment="Center"
-                                        HorizontalContentAlignment="Center"
-                                        Opacity="0.38"
-                                        ToolTip="Сменить фоновую анимацию"
-                                        Click="BgSwitchBtn_Click"/>
-                            </StackPanel>
+                            <StackPanel x:Name="NavPanel" DockPanel.Dock="Top"/>
                         </DockPanel>
                     </Border>
 
-                    <Grid Grid.Column="1" Margin="24">
-                        <ContentControl x:Name="PageHost" Background="Transparent"/>
+                    <Grid Grid.Column="1">
+                        <ContentControl x:Name="PageHost" Margin="24" Background="Transparent"/>
+                        <Button x:Name="BgSwitchBtn"
+                                Style="{StaticResource SecondaryButton}"
+                                FontSize="11"
+                                Padding="10,4"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Bottom"
+                                Margin="0,0,20,16"
+                                Opacity="0.38"
+                                Panel.ZIndex="2"
+                                ToolTip="Сменить фоновую анимацию"
+                                Click="BgSwitchBtn_Click"/>
                     </Grid>
                 </Grid>
             </Grid>

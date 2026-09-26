@@ -120,6 +120,7 @@ public partial class MainWindow : Window
         UpdateBgSwitchLabel();
 
         NavPanel.Children.Clear();
+        ExternalLinksPanel.Children.Clear();
         _activeNav = null;
         BuildNavigation();
         NavigateToSection(_activeSection);
@@ -443,7 +444,7 @@ public partial class MainWindow : Window
                 UseShellExecute = true
             });
         };
-        NavPanel.Children.Add(btn);
+        ExternalLinksPanel.Children.Add(btn);
     }
 
     private void NavigateToSection(string sectionId)

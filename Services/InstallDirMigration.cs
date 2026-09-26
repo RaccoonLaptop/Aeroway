@@ -64,6 +64,26 @@ public static class InstallDirMigration
         }
     }
 
+    public static void RemoveLeftoverLegacyFolder()
+    {
+        try
+        {
+            var current = AppContext.BaseDirectory.TrimEnd('\\', '/');
+            if (Path.GetFileName(current).Equals(LegacyFolderName, StringComparison.OrdinalIgnoreCase))
+                return;
+            if (!Directory.Exists(LegacyDataDirectory))
+                return;
+            if (!ZapretPaths.IsValidZapretRoot(ZapretPaths.GetBundledZapretPath()))
+                return;
+
+            ScheduleOldFolderDelete(LegacyDataDirectory);
+        }
+        catch
+        {
+            /* leave the old folder if it is still in use */
+        }
+    }
+
     public static void RemoveLegacyExeCopy()
     {
         try
@@ -101,7 +121,14 @@ public static class InstallDirMigration
         foreach (var file in Directory.GetFiles(source))
         {
             var target = Path.Combine(dest, Path.GetFileName(file));
-            File.Copy(file, target, overwrite: true);
+            try
+            {
+                File.Copy(file, target, overwrite: true);
+            }
+            catch (IOException)
+            {
+                /* winws or the running exe can keep a file open */
+            }
         }
 
         foreach (var dir in Directory.GetDirectories(source))

@@ -19,6 +19,7 @@ public partial class App : Application
         }
 
         InstallDirMigration.RemoveLegacyExeCopy();
+        InstallDirMigration.RemoveLeftoverLegacyFolder();
 
         var settings = AppSettings.Load();
         LocalizationService.Initialize(settings.Language);

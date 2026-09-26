@@ -59,12 +59,12 @@ public sealed class ZapretPaths
 
     public static string DetectRoot(string? savedPath = null)
     {
-        if (IsValidZapretRoot(savedPath))
-            return Path.GetFullPath(savedPath!);
-
         var bundled = GetBundledZapretPath();
         if (IsValidZapretRoot(bundled))
             return Path.GetFullPath(bundled);
+
+        if (IsValidZapretRoot(savedPath) && !IsLegacyInstallPath(savedPath))
+            return Path.GetFullPath(savedPath!);
 
         var dir = AppContext.BaseDirectory.TrimEnd('\\', '/');
         for (var i = 0; i < 8; i++)
@@ -83,6 +83,23 @@ public sealed class ZapretPaths
             return sibling;
 
         return savedPath ?? sibling;
+    }
+
+    private static bool IsLegacyInstallPath(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+        try
+        {
+            var full = Path.GetFullPath(path).TrimEnd('\\', '/');
+            var legacy = InstallDirMigration.LegacyDataDirectory.TrimEnd('\\', '/');
+            return full.Equals(legacy, StringComparison.OrdinalIgnoreCase)
+                   || full.StartsWith(legacy + "\\", StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public string GetLocalVersion()

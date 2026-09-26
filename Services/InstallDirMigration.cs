@@ -200,47 +200,14 @@ public static class InstallDirMigration
             ? Environment.ProcessId
             : 0;
 
-        var script = Path.Combine(Path.GetTempPath(), "aeroway-move-" + Guid.NewGuid().ToString("N") + ".ps1");
-        var literal = full.Replace("'", "''");
-        File.WriteAllText(script,
-            "$ErrorActionPreference = 'SilentlyContinue'\r\n" +
-            $"$legacy = '{literal}'\r\n" +
-            $"$waitPid = {waitPid}\r\n" +
-            "if ($waitPid -gt 0) {\r\n" +
-            "  $deadline = (Get-Date).AddSeconds(20)\r\n" +
-            "  while ((Get-Process -Id $waitPid -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 200 }\r\n" +
-            "}\r\n" +
-            "function Stop-Locked([string]$dir) {\r\n" +
-            "  $prefix = $dir.TrimEnd('\\') + '\\'\r\n" +
-            "  Get-CimInstance Win32_Process | Where-Object {\r\n" +
-            "    $_.ExecutablePath -and ($_.ExecutablePath.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase) -or $_.ExecutablePath.Equals($dir, [StringComparison]::OrdinalIgnoreCase))\r\n" +
-            "  } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }\r\n" +
-            "}\r\n" +
-            "function Remove-TreeForce([string]$path) {\r\n" +
-            "  if (-not (Test-Path -LiteralPath $path)) { return }\r\n" +
-            "  cmd.exe /c \"attrib -r -s -h `\"$path\\*.*`\" /s /d\" | Out-Null\r\n" +
-            "  cmd.exe /c \"rd /s /q `\"$path`\"\" | Out-Null\r\n" +
-            "}\r\n" +
-            "for ($i = 0; $i -lt 15; $i++) {\r\n" +
-            "  if (-not (Test-Path -LiteralPath $legacy)) { break }\r\n" +
-            "  Stop-Locked $legacy\r\n" +
-            "  Remove-TreeForce $legacy\r\n" +
-            "  if (-not (Test-Path -LiteralPath $legacy)) { break }\r\n" +
-            "  Start-Sleep -Seconds 2\r\n" +
-            "}\r\n" +
-            "Get-ChildItem -LiteralPath $env:TEMP -Force -ErrorAction SilentlyContinue | Where-Object {\r\n" +
-            "  $_.Name -like 'ZapretUI-update-*' -or $_.Name -like 'ZapretUI-backup-*' -or $_.Name -eq 'ZapretUI-install-payload' -or $_.Name -eq 'ZapretUI-update.log'\r\n" +
-            "} | ForEach-Object { Remove-TreeForce $_.FullName }\r\n" +
-            "if (Test-Path -LiteralPath $legacy) {\r\n" +
-            "  $runOnce = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce'\r\n" +
-            "  if (-not (Test-Path $runOnce)) { New-Item -Path $runOnce -Force | Out-Null }\r\n" +
-            "  New-ItemProperty -Path $runOnce -Name 'AerowayRemoveZapretUI' -Value \"cmd /c rd /s /q `\"$legacy`\"\" -PropertyType String -Force | Out-Null\r\n" +
-            "}\r\n" +
-            "Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue\r\n");
+        var script = Path.Combine(AppContext.BaseDirectory, "Scripts", "remove-legacy-zapretui.ps1");
+        if (!File.Exists(script))
+            return;
+
         Process.Start(new ProcessStartInfo
         {
             FileName = "powershell.exe",
-            Arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"",
+            Arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\" -LegacyPath \"{full}\" -WaitPid {waitPid}",
             UseShellExecute = false,
             CreateNoWindow = true,
             WindowStyle = ProcessWindowStyle.Hidden

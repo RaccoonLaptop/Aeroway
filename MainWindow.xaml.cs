@@ -383,7 +383,7 @@ public partial class MainWindow : Window
             Loc.T("nav.telegram"),
             Loc.T("nav.telegram_tip"),
             TelegramChannelUrl,
-            new Thickness(0, 8, 0, 2));
+            new Thickness(0, 4, 0, 2));
     }
 
     private void AddGitHubButton()
@@ -394,7 +394,7 @@ public partial class MainWindow : Window
             Loc.T("nav.github"),
             Loc.T("nav.github_tip"),
             GitHubUrl,
-            new Thickness(0, 6, 0, 2));
+            new Thickness(0, 4, 0, 2));
     }
 
     private void AddDonateButton()
@@ -405,7 +405,7 @@ public partial class MainWindow : Window
             Loc.T("nav.donate"),
             Loc.T("nav.donate_tip"),
             DonateUrl,
-            new Thickness(0, 6, 0, 2));
+            new Thickness(0, 4, 0, 2));
     }
 
     private void AddExternalButton(string styleKey, Geometry icon, string text, string tip, string url, Thickness margin)
@@ -415,16 +415,17 @@ public partial class MainWindow : Window
             Data = icon,
             Fill = Brushes.White,
             Stretch = Stretch.Uniform,
-            Width = 16,
-            Height = 16,
+            Width = 12,
+            Height = 12,
             VerticalAlignment = VerticalAlignment.Center
         };
         var label = new TextBlock
         {
             Text = text,
+            FontSize = 11,
             Foreground = Brushes.White,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 0, 0)
+            Margin = new Thickness(6, 0, 0, 0)
         };
         var content = new StackPanel { Orientation = Orientation.Horizontal };
         content.Children.Add(mark);

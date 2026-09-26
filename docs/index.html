@@ -76,6 +76,13 @@
     .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
     .dot.ok { background: var(--success); }
     .dot.err { background: var(--error); }
+    pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      overflow-x: auto;
+    }
     footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 32px; }
     #en { display: none; }
     html.lang-en #ru { display: none; }
@@ -166,13 +173,23 @@
       </section>
 
       <section>
-        <h2>Решение проблем</h2>
-        <ul>
-          <li><strong>Антивирус удалил WinDivert или winws</strong> — восстановите файл из карантина и добавьте папку <code>%LOCALAPPDATA%\Aeroway</code> в исключения.</li>
-          <li><strong>winws не запустился</strong> — запуск от администратора, разрешение в брандмауэре, другая стратегия.</li>
-          <li><strong>Не открывается окно</strong> — установите последнюю версию с GitHub.</li>
-          <li><strong>Сайты не работают</strong> — обновите Flowseal в «Сервис», смените стратегию.</li>
-        </ul>
+        <h2>Если не работает</h2>
+        <ol>
+          <li><strong>Антивирус забрал <code>WinDivert</code> или <code>winws.exe</code>.</strong> Восстановите файл из карантина и исключите папку <code>%LOCALAPPDATA%\Aeroway</code>. Срабатывание <code>Not-a-virus:RiskTool.Multi.WinDivert</code> относится к драйверу zapret.</li>
+          <li><strong>Брандмауэр молча блокирует запуск.</strong> Разрешите <code>Aeroway.exe</code> и <code>zapret\bin\winws.exe</code> для частной и публичной сети.</li>
+          <li><strong>Сайты всё ещё не открываются.</strong> Смените стратегию или обновите Flowseal в разделе «Сервис».</li>
+          <li><strong>Окно не открывается.</strong> Поставьте последнюю версию со <a href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">страницы релизов</a>.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Файлы и удаление</h2>
+        <p>После установки программа лежит в <code>%LOCALAPPDATA%\Aeroway</code>. Обычно это <code>C:\Users\&lt;имя&gt;\AppData\Local\Aeroway</code>. Движок — в <code>zapret\bin\winws.exe</code>.</p>
+        <p>Удаление — через «Приложения и возможности», имя <strong>Aeroway</strong>. Ярлык и иконка тоже от Aeroway.</p>
+        <p>Если при удалении папки Windows пишет, что занят <code>WinDivert64.sys</code>, драйвер ещё загружен. Остановите обход, затем в PowerShell от администратора:</p>
+        <pre><code>sc.exe stop WinDivert
+sc.exe delete WinDivert</code></pre>
+        <p>В PowerShell нужна именно команда <code>sc.exe</code>. После этого файл отпускает папку.</p>
       </section>
 
     </div>
@@ -242,13 +259,23 @@
       </section>
 
       <section>
-        <h2>Troubleshooting</h2>
-        <ul>
-          <li><strong>Antivirus removed WinDivert or winws</strong> — restore the file from quarantine and exclude <code>%LOCALAPPDATA%\Aeroway</code>.</li>
-          <li><strong>winws did not start</strong> — run as administrator, allow it in the firewall, try another strategy.</li>
-          <li><strong>Window won’t open</strong> — install the latest release from GitHub.</li>
-          <li><strong>Sites still blocked</strong> — update Flowseal in Service, change strategy.</li>
-        </ul>
+        <h2>If it does not start</h2>
+        <ol>
+          <li><strong>Antivirus removed <code>WinDivert</code> or <code>winws.exe</code>.</strong> Restore the file from quarantine and exclude <code>%LOCALAPPDATA%\Aeroway</code>. A detection named <code>Not-a-virus:RiskTool.Multi.WinDivert</code> is the zapret driver.</li>
+          <li><strong>The firewall blocks startup quietly.</strong> Allow <code>Aeroway.exe</code> and <code>zapret\bin\winws.exe</code> on private and public networks.</li>
+          <li><strong>Sites still do not open.</strong> Change the strategy or update Flowseal in Service.</li>
+          <li><strong>The window does not open.</strong> Install the latest build from the <a href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">releases page</a>.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Files and removal</h2>
+        <p>After installation the app is in <code>%LOCALAPPDATA%\Aeroway</code>, usually <code>C:\Users\&lt;name&gt;\AppData\Local\Aeroway</code>. The engine is <code>zapret\bin\winws.exe</code>.</p>
+        <p>Remove it from Apps &amp; features under the name <strong>Aeroway</strong>. The shortcut and icon use that name too.</p>
+        <p>If Windows says <code>WinDivert64.sys</code> is in use, the driver is still loaded. Stop the bypass, then in an administrator PowerShell window:</p>
+        <pre><code>sc.exe stop WinDivert
+sc.exe delete WinDivert</code></pre>
+        <p>In PowerShell the command must be <code>sc.exe</code>. After that the file no longer locks the folder.</p>
       </section>
     </div>
 

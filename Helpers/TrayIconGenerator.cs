@@ -61,7 +61,7 @@ public static class TrayIconGenerator
             using var path = new GraphicsPath();
             using var family = new System.Drawing.FontFamily("Segoe UI");
             using var format = new StringFormat();
-            path.AddString("A", family, (int)System.Drawing.FontStyle.Bold, 210f * scale, System.Drawing.PointF.Empty, format);
+            path.AddString("A", family, (int)System.Drawing.FontStyle.Bold, 300f * scale, System.Drawing.PointF.Empty, format);
             var bounds = path.GetBounds();
             using (var matrix = new System.Drawing.Drawing2D.Matrix())
             {

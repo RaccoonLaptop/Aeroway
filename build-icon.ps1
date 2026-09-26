@@ -40,7 +40,7 @@ function New-ZapretIconPng {
         $letter = New-Object System.Drawing.Drawing2D.GraphicsPath
         $family = New-Object System.Drawing.FontFamily("Segoe UI")
         $format = New-Object System.Drawing.StringFormat
-        $letter.AddString("A", $family, [int][System.Drawing.FontStyle]::Bold, 210, (New-Object System.Drawing.PointF 0, 0), $format)
+        $letter.AddString("A", $family, [int][System.Drawing.FontStyle]::Bold, 300, (New-Object System.Drawing.PointF 0, 0), $format)
         $bounds = $letter.GetBounds()
         $dx = ($size / 2) - ($bounds.X + $bounds.Width / 2)
         $dy = ($size / 2) - ($bounds.Y + $bounds.Height / 2)

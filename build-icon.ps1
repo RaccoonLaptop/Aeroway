@@ -36,16 +36,22 @@ function New-ZapretIconPng {
         $g.DrawArc($arcPen, 72, 72, 368, 368, 210, 95)
         $arcPen.Dispose()
 
-        $font = New-Object System.Drawing.Font("Segoe UI", 210, [System.Drawing.FontStyle]::Bold)
         $textBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(244, 231, 198))
+        $letter = New-Object System.Drawing.Drawing2D.GraphicsPath
+        $family = New-Object System.Drawing.FontFamily("Segoe UI")
         $format = New-Object System.Drawing.StringFormat
-        $format.Alignment = [System.Drawing.StringAlignment]::Center
-        $format.LineAlignment = [System.Drawing.StringAlignment]::Center
-        $textRect = New-Object System.Drawing.RectangleF 0, 46, $size, $size
-        $g.DrawString("A", $font, $textBrush, $textRect, $format)
-        $font.Dispose()
-        $textBrush.Dispose()
+        $letter.AddString("A", $family, [int][System.Drawing.FontStyle]::Bold, 210, (New-Object System.Drawing.PointF 0, 0), $format)
+        $bounds = $letter.GetBounds()
+        $dx = ($size / 2) - ($bounds.X + $bounds.Width / 2)
+        $dy = ($size / 2) - ($bounds.Y + $bounds.Height / 2)
+        $matrix = New-Object System.Drawing.Drawing2D.Matrix 1, 0, 0, 1, $dx, $dy
+        $letter.Transform($matrix)
+        $g.FillPath($textBrush, $letter)
+        $matrix.Dispose()
+        $letter.Dispose()
+        $family.Dispose()
         $format.Dispose()
+        $textBrush.Dispose()
     }
     finally {
         $g.Dispose()

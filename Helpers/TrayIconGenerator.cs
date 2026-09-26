@@ -10,7 +10,6 @@ using LinearGradientBrush = System.Drawing.Drawing2D.LinearGradientBrush;
 using Pen = System.Drawing.Pen;
 using RectangleF = System.Drawing.RectangleF;
 using SolidBrush = System.Drawing.SolidBrush;
-using StringAlignment = System.Drawing.StringAlignment;
 using StringFormat = System.Drawing.StringFormat;
 
 namespace ZapretUI.Helpers;
@@ -58,14 +57,18 @@ public static class TrayIconGenerator
                 g.DrawArc(arcPen, 72f * scale, 72f * scale, 368f * scale, 368f * scale, 210, 95);
             }
 
-            using var font = new System.Drawing.Font("Segoe UI", 210f * scale, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
             using var textBrush = new SolidBrush(DColor.FromArgb(244, 231, 198));
-            using var format = new StringFormat
+            using var path = new GraphicsPath();
+            using var family = new System.Drawing.FontFamily("Segoe UI");
+            using var format = new StringFormat();
+            path.AddString("A", family, (int)System.Drawing.FontStyle.Bold, 210f * scale, System.Drawing.PointF.Empty, format);
+            var bounds = path.GetBounds();
+            using (var matrix = new System.Drawing.Drawing2D.Matrix())
             {
-                Alignment = StringAlignment.Center,
-                LineAlignment = StringAlignment.Center
-            };
-            g.DrawString("A", font, textBrush, new RectangleF(0, 46f * scale, size, size), format);
+                matrix.Translate(size / 2f - (bounds.X + bounds.Width / 2f), size / 2f - (bounds.Y + bounds.Height / 2f));
+                path.Transform(matrix);
+            }
+            g.FillPath(textBrush, path);
         }
 
         var handle = bmp.GetHicon();

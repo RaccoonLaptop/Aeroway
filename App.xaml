@@ -20,9 +20,9 @@
         <Color x:Key="TextMutedColor">#c9b896</Color>
 
         <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}"/>
-        <SolidColorBrush x:Key="ShellOverlayBrush" Color="#A60D2240"/>
-        <SolidColorBrush x:Key="TitleBarOverlayBrush" Color="#B20D2240"/>
-        <SolidColorBrush x:Key="PanelOverlayBrush" Color="#8C0D2240"/>
+        <SolidColorBrush x:Key="ShellOverlayBrush" Color="#E6050b1b"/>
+        <SolidColorBrush x:Key="TitleBarOverlayBrush" Color="#F2050b1b"/>
+        <SolidColorBrush x:Key="PanelOverlayBrush" Color="#CC0d2240"/>
         <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
         <SolidColorBrush x:Key="SurfaceLightBrush" Color="{StaticResource SurfaceLightColor}"/>
         <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceElevatedColor}"/>

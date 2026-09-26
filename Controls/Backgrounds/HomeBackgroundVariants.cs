@@ -283,9 +283,9 @@ public sealed class WavyBackground : AnimatedBackgroundBase
     protected override void RenderFrame(DrawingContext dc, double timeMs)
     {
         if (AreaWidth <= 0 || AreaHeight <= 0) return;
-        var menu = Application.Current?.TryFindResource("SurfaceBrush") as SolidColorBrush
-                   ?? new SolidColorBrush(Color.FromRgb(0x0D, 0x22, 0x40));
-        dc.DrawRectangle(menu, null, new Rect(0, 0, AreaWidth, AreaHeight));
+        var baseFill = new SolidColorBrush(ParseColor("#050b1b"));
+        baseFill.Freeze();
+        dc.DrawRectangle(baseFill, null, new Rect(0, 0, AreaWidth, AreaHeight));
         var t = ScaledTimeSec(timeMs);
         for (var wave = 0; wave < 4; wave++)
         {
@@ -302,7 +302,7 @@ public sealed class WavyBackground : AnimatedBackgroundBase
                 ctx.LineTo(new Point(AreaWidth, AreaHeight), true, false);
             }
             geometry.Freeze();
-            var brush = new SolidColorBrush(Color.FromArgb(18, 224, 178, 64));
+            var brush = new SolidColorBrush(Color.FromArgb(26, 224, 178, 64));
             brush.Freeze();
             dc.DrawGeometry(brush, null, geometry);
         }

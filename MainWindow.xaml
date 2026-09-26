@@ -67,7 +67,12 @@
                             </StackPanel>
 
                             <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
-                                <Border Background="#7A181b26" CornerRadius="8" Padding="10" x:Name="StatusBorder">
+                                <Border Background="#CC0d2240"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="10"
+                                        x:Name="StatusBorder">
                                     <StackPanel>
                                         <TextBlock x:Name="StatusHeader" Text="Статус" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
                                         <Grid Margin="0,6,0,0">

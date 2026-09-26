@@ -8,7 +8,7 @@ public static class TestRunStateStore
 {
     private static readonly string SessionPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ZapretUI", "test-session.json");
+        InstallDirMigration.FolderName, "test-session.json");
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

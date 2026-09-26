@@ -6,9 +6,11 @@ namespace ZapretUI.Services;
 
 public static class AppStartupService
 {
-    private const string TaskName = "ZapretUI_Autostart";
+    private const string TaskName = "Aeroway_Autostart";
+    private const string LegacyTaskName = "ZapretUI_Autostart";
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "ZapretUI";
+    private const string ValueName = "Aeroway";
+    private const string LegacyValueName = "ZapretUI";
 
     public static bool IsEnabled()
     {
@@ -53,8 +55,7 @@ public static class AppStartupService
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
             return path;
 
-        path = Path.Combine(AppContext.BaseDirectory, "ZapretUI.exe");
-        return File.Exists(path) ? path : null;
+        return InstallDirMigration.FirstExistingExe(AppContext.BaseDirectory);
     }
 
     private static bool IsTaskScheduled()
@@ -62,7 +63,7 @@ public static class AppStartupService
         try
         {
             using var taskService = new TaskService();
-            return taskService.GetTask(TaskName) is not null;
+            return taskService.GetTask(TaskName) is not null || taskService.GetTask(LegacyTaskName) is not null;
         }
         catch
         {
@@ -76,6 +77,7 @@ public static class AppStartupService
         {
             using var taskService = new TaskService();
             taskService.RootFolder.DeleteTask(TaskName, false);
+            taskService.RootFolder.DeleteTask(LegacyTaskName, false);
 
             var definition = taskService.NewTask();
             definition.RegistrationInfo.Description =
@@ -112,6 +114,7 @@ public static class AppStartupService
         {
             using var taskService = new TaskService();
             taskService.RootFolder.DeleteTask(TaskName, false);
+            taskService.RootFolder.DeleteTask(LegacyTaskName, false);
         }
         catch
         {
@@ -124,7 +127,7 @@ public static class AppStartupService
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, false);
-            return key?.GetValue(ValueName) is string;
+            return key?.GetValue(ValueName) is string || key?.GetValue(LegacyValueName) is string;
         }
         catch
         {
@@ -144,6 +147,7 @@ public static class AppStartupService
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
             key?.DeleteValue(ValueName, false);
+            key?.DeleteValue(LegacyValueName, false);
         }
         catch
         {

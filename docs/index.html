@@ -107,7 +107,7 @@
         <ol>
           <li>Скачайте и установите <strong>Aeroway-Setup.exe</strong>.</li>
           <li>При первом запуске дождитесь загрузки компонентов Flowseal.</li>
-          <li>Добавьте папку программы в исключения антивируса и разрешите <code>ZapretUI.exe</code> и <code>winws.exe</code> в брандмауэре — см. раздел ниже.</li>
+          <li>Добавьте папку программы в исключения антивируса и разрешите <code>Aeroway.exe</code> и <code>winws.exe</code> в брандмауэре — см. раздел ниже.</li>
           <li>На вкладке <strong>Главная</strong> выберите стратегию и нажмите <strong>ЗАПУСТИТЬ</strong>.</li>
         </ol>
       </section>
@@ -115,13 +115,13 @@
       <section>
         <h2>Антивирус и брандмауэр</h2>
         <p>Исключения в антивирус и правила брандмауэра добавляются вручную. Без них Windows Defender может удалить <code>WinDivert</code> и <code>winws.exe</code>, а брандмауэр — заблокировать запуск.</p>
-        <p>После установки программа лежит в <code>%LOCALAPPDATA%\ZapretUI</code> — обычно <code>C:\Users\&lt;имя&gt;\AppData\Local\ZapretUI</code>. Внутри неё находится <code>zapret\bin\winws.exe</code>.</p>
+        <p>После установки программа лежит в <code>%LOCALAPPDATA%\Aeroway</code> — обычно <code>C:\Users\&lt;имя&gt;\AppData\Local\Aeroway</code>. Внутри неё находится <code>zapret\bin\winws.exe</code>.</p>
         <h3>Windows Defender</h3>
         <ol>
           <li>Откройте <strong>Безопасность Windows</strong>.</li>
           <li><strong>Защита от вирусов и угроз</strong> → <strong>Управление настройками</strong>.</li>
           <li><strong>Исключения</strong> → <strong>Добавление или удаление исключений</strong> → <strong>Добавить исключение</strong> → <strong>Папка</strong>.</li>
-          <li>Укажите <code>%LOCALAPPDATA%\ZapretUI</code>.</li>
+          <li>Укажите <code>%LOCALAPPDATA%\Aeroway</code>.</li>
         </ol>
         <p>Если установлен другой антивирус, добавьте ту же папку в его исключения. Срабатывание с именем <code>WinDivert</code> или <code>Not-a-virus:RiskTool.Multi.WinDivert</code> относится к драйверу zapret: файл нужно восстановить из карантина и оставить папку в исключениях.</p>
         <h3>Брандмауэр Windows</h3>
@@ -130,8 +130,8 @@
           <li>Нажмите <strong>Изменить параметры</strong> (нужны права администратора).</li>
           <li><strong>Разрешить другое приложение</strong> → <strong>Обзор</strong> и добавьте оба файла:
             <ul>
-              <li><code>%LOCALAPPDATA%\ZapretUI\ZapretUI.exe</code></li>
-              <li><code>%LOCALAPPDATA%\ZapretUI\zapret\bin\winws.exe</code></li>
+              <li><code>%LOCALAPPDATA%\Aeroway\Aeroway.exe</code></li>
+              <li><code>%LOCALAPPDATA%\Aeroway\zapret\bin\winws.exe</code></li>
             </ul>
           </li>
           <li>Для каждого файла отметьте частную и публичную сеть.</li>
@@ -168,7 +168,7 @@
       <section>
         <h2>Решение проблем</h2>
         <ul>
-          <li><strong>Антивирус удалил WinDivert или winws</strong> — восстановите файл из карантина и добавьте папку <code>%LOCALAPPDATA%\ZapretUI</code> в исключения.</li>
+          <li><strong>Антивирус удалил WinDivert или winws</strong> — восстановите файл из карантина и добавьте папку <code>%LOCALAPPDATA%\Aeroway</code> в исключения.</li>
           <li><strong>winws не запустился</strong> — запуск от администратора, разрешение в брандмауэре, другая стратегия.</li>
           <li><strong>Не открывается окно</strong> — установите последнюю версию с GitHub.</li>
           <li><strong>Сайты не работают</strong> — обновите Flowseal в «Сервис», смените стратегию.</li>
@@ -183,7 +183,7 @@
         <ol>
           <li>Download and install <strong>Aeroway-Setup.exe</strong>.</li>
           <li>On first launch wait for Flowseal components to download.</li>
-          <li>Add the app folder to antivirus exclusions and allow <code>ZapretUI.exe</code> and <code>winws.exe</code> through the firewall — see the section below.</li>
+          <li>Add the app folder to antivirus exclusions and allow <code>Aeroway.exe</code> and <code>winws.exe</code> through the firewall — see the section below.</li>
           <li>On <strong>Home</strong> pick a strategy and press <strong>START</strong>.</li>
         </ol>
       </section>
@@ -191,13 +191,13 @@
       <section>
         <h2>Antivirus and firewall</h2>
         <p>Antivirus exclusions and firewall rules are added manually. Without them, Windows Defender may remove <code>WinDivert</code> and <code>winws.exe</code>, and the firewall may block startup.</p>
-        <p>After installation the app is in <code>%LOCALAPPDATA%\ZapretUI</code> — usually <code>C:\Users\&lt;name&gt;\AppData\Local\ZapretUI</code>. <code>zapret\bin\winws.exe</code> is inside that folder.</p>
+        <p>After installation the app is in <code>%LOCALAPPDATA%\Aeroway</code> — usually <code>C:\Users\&lt;name&gt;\AppData\Local\Aeroway</code>. <code>zapret\bin\winws.exe</code> is inside that folder.</p>
         <h3>Windows Defender</h3>
         <ol>
           <li>Open <strong>Windows Security</strong>.</li>
           <li><strong>Virus &amp; threat protection</strong> → <strong>Manage settings</strong>.</li>
           <li><strong>Exclusions</strong> → <strong>Add or remove exclusions</strong> → <strong>Add an exclusion</strong> → <strong>Folder</strong>.</li>
-          <li>Select <code>%LOCALAPPDATA%\ZapretUI</code>.</li>
+          <li>Select <code>%LOCALAPPDATA%\Aeroway</code>.</li>
         </ol>
         <p>With another antivirus, add the same folder to its exclusions. A detection named <code>WinDivert</code> or <code>Not-a-virus:RiskTool.Multi.WinDivert</code> is the zapret driver: restore the file from quarantine and keep the folder excluded.</p>
         <h3>Windows Firewall</h3>
@@ -206,8 +206,8 @@
           <li>Click <strong>Change settings</strong> (administrator rights required).</li>
           <li><strong>Allow another app</strong> → <strong>Browse</strong> and add both files:
             <ul>
-              <li><code>%LOCALAPPDATA%\ZapretUI\ZapretUI.exe</code></li>
-              <li><code>%LOCALAPPDATA%\ZapretUI\zapret\bin\winws.exe</code></li>
+              <li><code>%LOCALAPPDATA%\Aeroway\Aeroway.exe</code></li>
+              <li><code>%LOCALAPPDATA%\Aeroway\zapret\bin\winws.exe</code></li>
             </ul>
           </li>
           <li>For each file, allow private and public networks.</li>
@@ -244,7 +244,7 @@
       <section>
         <h2>Troubleshooting</h2>
         <ul>
-          <li><strong>Antivirus removed WinDivert or winws</strong> — restore the file from quarantine and exclude <code>%LOCALAPPDATA%\ZapretUI</code>.</li>
+          <li><strong>Antivirus removed WinDivert or winws</strong> — restore the file from quarantine and exclude <code>%LOCALAPPDATA%\Aeroway</code>.</li>
           <li><strong>winws did not start</strong> — run as administrator, allow it in the firewall, try another strategy.</li>
           <li><strong>Window won’t open</strong> — install the latest release from GitHub.</li>
           <li><strong>Sites still blocked</strong> — update Flowseal in Service, change strategy.</li>
@@ -254,7 +254,7 @@
 
     <footer>
       <p>Aeroway by Niko · <a href="https://github.com/RaccoonLaptop/Aeroway">GitHub</a> · <a href="https://t.me/AerowayUI">Telegram</a> · <a href="donate.html">Донат</a> · <a href="https://github.com/bol-van/zapret">zapret</a> · <a href="https://github.com/Flowseal/zapret-discord-youtube">Flowseal</a></p>
-      <p>v1.11.8</p>
+      <p>v1.11.9</p>
     </footer>
   </div>
   <script>

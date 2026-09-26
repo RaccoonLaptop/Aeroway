@@ -65,15 +65,18 @@ function Copy-Tree {
 
 function Stop-ZapretUiProcess {
     Write-Log "Closing Aeroway so files can be replaced..."
-    Get-Process -Name 'ZapretUI' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Get-Process -Name 'ZapretUI','Aeroway' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     $deadline = (Get-Date).AddSeconds(15)
-    while ((Get-Process -Name 'ZapretUI' -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
+    while ((Get-Process -Name 'ZapretUI','Aeroway' -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
         Start-Sleep -Milliseconds 200
     }
 }
 
 function Start-ZapretUi {
-    $launch = Join-Path $TargetDir "ZapretUI.exe"
+    $launch = Join-Path $TargetDir "Aeroway.exe"
+    if (-not (Test-Path -LiteralPath $launch)) {
+        $launch = Join-Path $TargetDir "ZapretUI.exe"
+    }
     if (-not (Test-Path -LiteralPath $launch)) { return }
     Write-Log "Запуск Aeroway..."
     Write-Log "Starting: $launch"

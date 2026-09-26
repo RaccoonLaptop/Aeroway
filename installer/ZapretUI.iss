@@ -22,7 +22,8 @@ AppPublisher=Niko
 AppPublisherURL=https://github.com/RaccoonLaptop/Aeroway
 AppSupportURL=https://github.com/RaccoonLaptop/Aeroway
 AppUpdatesURL=https://github.com/RaccoonLaptop/Aeroway/releases
-DefaultDirName={localappdata}\ZapretUI
+DefaultDirName={localappdata}\Aeroway
+UsePreviousAppDir=no
 DisableDirPage=yes
 PrivilegesRequired=lowest
 OutputDir={#OutputDir}
@@ -33,9 +34,10 @@ SolidCompression=yes
 WizardStyle=modern
 WizardImageFile=..\Assets\installer-wizard.bmp
 WizardSmallImageFile=..\Assets\installer-small.bmp
-WizardImageBackColor=$10121A
+WizardImageBackColor=$050B1B
 WizardImageStretch=no
-UninstallDisplayIcon={app}\ZapretUI.exe
+UninstallDisplayName=Aeroway
+UninstallDisplayIcon={app}\Aeroway.exe
 MinVersion=10.0
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -55,12 +57,12 @@ Type: files; Name: "{autoprograms}\Zapret UI.lnk"
 Type: files; Name: "{autodesktop}\Zapret UI.lnk"
 
 [Icons]
-Name: "{autoprograms}\Aeroway"; Filename: "{app}\ZapretUI.exe"; Comment: "Aeroway — обход блокировок Discord, YouTube и др."
-Name: "{autodesktop}\Aeroway"; Filename: "{app}\ZapretUI.exe"; Tasks: desktopicon; Comment: "Aeroway"
+Name: "{autoprograms}\Aeroway"; Filename: "{app}\Aeroway.exe"; IconFilename: "{app}\Aeroway.exe"; Comment: "Aeroway — обход блокировок Discord, YouTube и др."
+Name: "{autodesktop}\Aeroway"; Filename: "{app}\Aeroway.exe"; IconFilename: "{app}\Aeroway.exe"; Tasks: desktopicon; Comment: "Aeroway"
 
 [Run]
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Scripts\bootstrap-zapret.ps1"" -TargetDir ""{app}\zapret"""; StatusMsg: "Скачивание zapret (Flowseal)..."; Flags: waituntilterminated
-Filename: "{app}\ZapretUI.exe"; Description: "Запустить Aeroway"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Aeroway.exe"; Description: "Запустить Aeroway"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\zapret"

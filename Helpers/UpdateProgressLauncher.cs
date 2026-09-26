@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using ZapretUI.Services;
 
 namespace ZapretUI.Helpers;
 
@@ -18,7 +19,9 @@ public static class UpdateProgressLauncher
 
         var exe = Environment.ProcessPath;
         if (string.IsNullOrEmpty(exe) || !File.Exists(exe))
-            exe = Path.Combine(AppContext.BaseDirectory, "ZapretUI.exe");
+            exe = InstallDirMigration.FirstExistingExe(AppContext.BaseDirectory);
+        if (string.IsNullOrEmpty(exe))
+            return;
 
         var version = string.IsNullOrWhiteSpace(targetVersion) ? "?" : targetVersion.Trim();
         var args =

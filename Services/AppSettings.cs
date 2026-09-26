@@ -7,7 +7,7 @@ public sealed class AppSettings
 {
     private static readonly string SettingsPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ZapretUI", "settings.json");
+        InstallDirMigration.FolderName, "settings.json");
 
     public string? ZapretRoot { get; set; }
     public string? LastStrategy { get; set; }
@@ -34,11 +34,23 @@ public sealed class AppSettings
 
     public static string? LoadError { get; private set; }
 
+    private static void MigrateLegacySettings()
+    {
+        if (File.Exists(SettingsPath))
+            return;
+        var legacy = Path.Combine(InstallDirMigration.LegacyDataDirectory, "settings.json");
+        if (!File.Exists(legacy))
+            return;
+        Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
+        File.Copy(legacy, SettingsPath, overwrite: false);
+    }
+
     public static AppSettings Load()
     {
         LoadError = null;
         try
         {
+            MigrateLegacySettings();
             if (File.Exists(SettingsPath))
             {
                 var json = File.ReadAllText(SettingsPath);

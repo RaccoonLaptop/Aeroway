@@ -166,7 +166,7 @@ public sealed class AppSelfUpdateService
             CopyDirectory(prepared.SourceDir, installPayloadDir);
 
             var logFile = GetUpdateLogPath();
-            var exePath = Path.Combine(_installDir, "ZapretUI.exe");
+            var exePath = InstalledExePath();
             var pid = Process.GetCurrentProcess().Id;
             StartUpdateProgressUi(logFile, prepared.ManifestVersion);
             var args = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{scriptPath}\" " +
@@ -486,7 +486,7 @@ public sealed class AppSelfUpdateService
             return Task.FromResult(AppUpdateInstallResult.Fail("Скрипт apply-update-installer.ps1 не найден"));
 
         var logFile = GetUpdateLogPath();
-        var exePath = Path.Combine(_installDir, "ZapretUI.exe");
+        var exePath = InstalledExePath();
         var pid = Process.GetCurrentProcess().Id;
         StartUpdateProgressUi(logFile, prepared.ManifestVersion);
         var args = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{scriptPath}\" " +
@@ -513,6 +513,10 @@ public sealed class AppSelfUpdateService
             restart: true,
             keepPreparedFiles: true));
     }
+
+    private string InstalledExePath() =>
+        InstallDirMigration.FirstExistingExe(_installDir)
+        ?? Path.Combine(_installDir, "ZapretUI.exe");
 
     private static string GetUpdateLogPath() =>
         Path.Combine(Path.GetTempPath(), "ZapretUI-update.log");

@@ -28,6 +28,8 @@ dotnet publish -c Release -r win-x64 --self-contained true `
 if ($LASTEXITCODE -ne 0) { Pop-Location; exit 1 }
 Pop-Location
 
+Copy-Item -LiteralPath (Join-Path $StagingDir "ZapretUI.exe") -Destination (Join-Path $StagingDir "Aeroway.exe") -Force
+
 $bundledZapret = Join-Path $Packaging "zapret"
 $stagingZapret = Join-Path $StagingDir "zapret"
 if (-not (Test-Path (Join-Path $bundledZapret "service.bat")) -or -not (Test-Path (Join-Path $bundledZapret "bin"))) {

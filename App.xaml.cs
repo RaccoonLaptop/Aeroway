@@ -12,6 +12,12 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        if (InstallDirMigration.TryRelaunchIntoAerowayFolder())
+        {
+            Shutdown();
+            return;
+        }
+
         var settings = AppSettings.Load();
         LocalizationService.Initialize(settings.Language);
 
@@ -42,7 +48,7 @@ public partial class App : Application
             {
                 var logDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "ZapretUI");
+                    InstallDirMigration.FolderName);
                 Directory.CreateDirectory(logDir);
                 File.WriteAllText(
                     Path.Combine(logDir, "last-error.log"),

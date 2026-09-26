@@ -18,6 +18,8 @@ public partial class App : Application
             return;
         }
 
+        InstallDirMigration.RemoveLegacyExeCopy();
+
         var settings = AppSettings.Load();
         LocalizationService.Initialize(settings.Language);
 

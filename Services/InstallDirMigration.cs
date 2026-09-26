@@ -64,6 +64,26 @@ public static class InstallDirMigration
         }
     }
 
+    public static void RemoveLegacyExeCopy()
+    {
+        try
+        {
+            var current = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(current))
+                return;
+            if (Path.GetFileName(current).Equals("ZapretUI.exe", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            var legacy = Path.Combine(AppContext.BaseDirectory, "ZapretUI.exe");
+            if (File.Exists(legacy))
+                File.Delete(legacy);
+        }
+        catch
+        {
+            /* file still in use */
+        }
+    }
+
     public static string? FirstExistingExe(string directory)
     {
         foreach (var name in new[] { "Aeroway.exe", "ZapretUI.exe" })

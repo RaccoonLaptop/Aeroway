@@ -173,7 +173,6 @@ public partial class ServicePage : UserControl
         updBtns.Children.Add(ActionBtn(Loc.T("service.check_app_update"), async () => await CheckAppUpdateAsync()));
         updBtns.Children.Add(ActionBtn(Loc.T("service.check_flowseal_update"), async () => await CheckFlowsealUpdateAsync()));
         updBtns.Children.Add(ActionBtn(Loc.T("service.reinstall_flowseal"), async () => await ReinstallFlowsealAsync()));
-        updBtns.Children.Add(ActionBtn(Loc.T("service.open_flowseal_release"), () => new UpdateService(_paths).OpenReleasePage()));
         updStack.Children.Add(updBtns);
         updCard.Child = updStack;
         root.Children.Add(updCard);
@@ -275,8 +274,8 @@ public partial class ServicePage : UserControl
         root.Children.Add(Section(Loc.T("service.section_links")));
         var linksCard = Card();
         var linksRow = new WrapPanel();
-        linksRow.Children.Add(LinkButton("Flowseal/zapret-discord-youtube", FlowsealUrl));
-        linksRow.Children.Add(LinkButton("GitHub", AppUrl));
+        linksRow.Children.Add(LinkButton(Loc.T("service.link_flowseal"), FlowsealUrl));
+        linksRow.Children.Add(LinkButton(Loc.T("service.link_aeroway"), AppUrl));
         linksRow.Children.Add(LinkButton("Telegram", TelegramUrl));
         linksRow.Children.Add(LinkButton("Донат", DonateUrl));
         linksCard.Child = linksRow;

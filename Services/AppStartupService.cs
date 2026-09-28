@@ -95,7 +95,7 @@ public static class AppStartupService
             var workDir = Path.GetDirectoryName(exePath) ?? AppContext.BaseDirectory;
             definition.Actions.Add(new ExecAction(exePath, "--tray", workDir));
 
-            definition.Principal.RunLevel = TaskRunLevel.LUA;
+            definition.Principal.RunLevel = TaskRunLevel.Highest;
             definition.Principal.UserId = WindowsIdentity.GetCurrent().Name;
             definition.Principal.LogonType = TaskLogonType.InteractiveToken;
 

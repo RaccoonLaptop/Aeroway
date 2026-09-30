@@ -17,7 +17,7 @@
   #define Configuration "Release"
 #endif
 
-#if Configuration <> "Release"
+#ifnstr Configuration "Release"
   #error Installer must not be built from this configuration
 #endif
 

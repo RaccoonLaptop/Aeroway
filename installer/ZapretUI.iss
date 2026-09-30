@@ -17,10 +17,6 @@
   #define Configuration "Release"
 #endif
 
-#ifnstr Configuration "Release"
-  #error Installer must not be built from this configuration
-#endif
-
 [Setup]
 AppId={{8F4E2A91-3C7D-4B6E-9F12-0A1B2C3D4E5F}
 AppName=Aeroway

@@ -10,7 +10,7 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <AssemblyName>ZapretUI</AssemblyName>
     <RootNamespace>ZapretUI</RootNamespace>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
     <Authors>Niko</Authors>
     <Company>Niko</Company>
     <Product>Aeroway</Product>

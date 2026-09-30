@@ -462,6 +462,8 @@ public partial class MainWindow : Window
             Margin = new Thickness(5, 0, 5, 0),
             ToolTip = string.IsNullOrWhiteSpace(tip) ? text : tip
         };
+        ToolTipService.SetPlacement(btn, System.Windows.Controls.Primitives.PlacementMode.Top);
+        ToolTipService.SetInitialShowDelay(btn, 250);
         btn.Click += (_, _) =>
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)

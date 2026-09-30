@@ -133,6 +133,7 @@
   "service.hosts_refresh_ok": "Списки актуальны. В hosts ничего менять не пришлось.",
   "service.hosts_refresh_updated": "В hosts обновлено списков: {0}.",
   "service.hosts_refresh_offline": "GitHub сейчас недоступен. Показан последний сохранённый список.",
+  "service.hosts_refresh_builtin": "GitHub сейчас недоступен. Показан встроенный список.",
   "service.hosts_startup_updated": "При запуске в hosts обновлены списки адресов: {0}.",
   "service.hosts_other": "Разное",
   "service.hosts_loading": "Загрузка списков...",

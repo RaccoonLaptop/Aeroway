@@ -7,7 +7,8 @@ namespace ZapretUI.Services;
 public sealed record HostsCatalogSnapshot(
     IReadOnlyList<HostListSection> Sections,
     bool FromNetwork,
-    int UpdatedBlocks);
+    int UpdatedBlocks,
+    bool BuiltIn = false);
 
 public sealed class HostsCatalogService
 {
@@ -19,9 +20,18 @@ public sealed class HostsCatalogService
 
     public HostsCatalogService(UpdateService updates) => _updates = updates;
 
+    public HostsCatalogSnapshot LoadLocal()
+    {
+        var flowsealCache = ReadCache("flowseal.hosts");
+        var malwCache = ReadCache("malw.hosts");
+        var flowseal = flowsealCache ?? ReadBundled("flowseal.hosts") ?? "";
+        var malw = malwCache ?? ReadBundled("malw.hosts") ?? "";
+        return Build(flowseal, malw, fromNetwork: false, builtIn: malwCache is null);
+    }
+
     public async Task<HostsCatalogSnapshot> RefreshAppliedAsync(CancellationToken ct = default)
     {
-        var snapshot = await LoadAsync(ct).ConfigureAwait(false);
+        var snapshot = await TryLoadNetworkAsync(ct).ConfigureAwait(false) ?? LoadLocal();
         var pending = snapshot.Sections
             .Where(section => SystemHostsFile.HasBlock(section.Id) && !SystemHostsFile.BlockMatches(section.Id, section.Lines))
             .ToList();
@@ -30,43 +40,70 @@ public sealed class HostsCatalogService
         return snapshot with { UpdatedBlocks = pending.Count };
     }
 
-    public async Task<HostsCatalogSnapshot> LoadAsync(CancellationToken ct = default)
-    {
-        var result = new List<HostListSection>();
-        var fromNetwork = true;
+    public Task<HostsCatalogSnapshot> LoadAsync(CancellationToken ct = default) =>
+        RefreshAppliedAsync(ct);
 
-        var flowsealRemote = false;
-        string flowsealText;
+    private async Task<HostsCatalogSnapshot?> TryLoadNetworkAsync(CancellationToken ct)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(TimeSpan.FromSeconds(8));
+        var token = timeout.Token;
+
+        var flowsealTask = DownloadFlowsealSafeAsync(token);
+        var malwTask = DownloadMalwSafeAsync(token);
+        await Task.WhenAll(flowsealTask, malwTask).ConfigureAwait(false);
+
+        var malw = await malwTask.ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(malw))
+            return null;
+
+        SaveCache("malw.hosts", malw);
+        var flowsealDownload = await flowsealTask.ConfigureAwait(false);
+        string flowseal;
+        if (flowsealDownload is not null)
+        {
+            flowseal = flowsealDownload;
+            SaveCache("flowseal.hosts", flowseal);
+        }
+        else
+        {
+            flowseal = ReadCache("flowseal.hosts") ?? ReadBundled("flowseal.hosts") ?? "";
+        }
+
+        return Build(flowseal, malw, fromNetwork: true, builtIn: false);
+    }
+
+    private async Task<string?> DownloadFlowsealSafeAsync(CancellationToken ct)
+    {
         try
         {
-            var flowsealDownload = await _updates.DownloadFlowsealHostsRemoteFirstAsync(ct).ConfigureAwait(false);
-            flowsealText = flowsealDownload.Content;
-            flowsealRemote = flowsealDownload.FromNetwork;
-            if (flowsealRemote)
-                SaveCache("flowseal.hosts", flowsealText);
+            var download = await _updates.DownloadFlowsealHostsRemoteFirstAsync(ct).ConfigureAwait(false);
+            return download.FromNetwork ? download.Content : null;
         }
         catch
         {
-            flowsealText = ReadCache("flowseal.hosts")
-                ?? await _updates.DownloadFlowsealHostsAsync(ct).ConfigureAwait(false);
+            return null;
         }
+    }
 
+    private async Task<string?> DownloadMalwSafeAsync(CancellationToken ct)
+    {
+        try
+        {
+            return await DownloadMalwAsync(ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private HostsCatalogSnapshot Build(string flowsealText, string malwText, bool fromNetwork, bool builtIn)
+    {
+        var result = new List<HostListSection>();
         var flowseal = HostsListParser.ParseFlat(flowsealText);
         _lines["flowseal"] = flowseal;
         result.Add(new HostListSection("flowseal", "Flowseal", flowseal));
-
-        string malwText;
-        try
-        {
-            malwText = await DownloadMalwAsync(ct).ConfigureAwait(false);
-            SaveCache("malw.hosts", malwText);
-        }
-        catch
-        {
-            fromNetwork = false;
-            malwText = ReadCache("malw.hosts")
-                ?? throw new InvalidOperationException("Список dns.malw.link не скачался и сохранённой копии нет.");
-        }
 
         foreach (var section in HostsListParser.ParseSections(malwText, "malw", Loc.T("service.hosts_other")))
         {
@@ -74,7 +111,7 @@ public sealed class HostsCatalogService
             result.Add(section);
         }
 
-        return new HostsCatalogSnapshot(result, fromNetwork, 0);
+        return new HostsCatalogSnapshot(result, fromNetwork, 0, builtIn);
     }
 
     public IReadOnlyList<string> Lines(string id) =>
@@ -101,9 +138,13 @@ public sealed class HostsCatalogService
         File.WriteAllText(Path.Combine(CacheDir, name), content);
     }
 
-    private static string? ReadCache(string name)
+    private static string? ReadCache(string name) => ReadTextFile(Path.Combine(CacheDir, name));
+
+    private static string? ReadBundled(string name) =>
+        ReadTextFile(Path.Combine(AppContext.BaseDirectory, "Assets", "hosts", name));
+
+    private static string? ReadTextFile(string path)
     {
-        var path = Path.Combine(CacheDir, name);
         if (!File.Exists(path))
             return null;
         var content = File.ReadAllText(path);

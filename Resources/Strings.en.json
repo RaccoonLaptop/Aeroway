@@ -133,6 +133,7 @@
   "service.hosts_refresh_ok": "The lists are current. Nothing in the hosts file had to change.",
   "service.hosts_refresh_updated": "Updated lists in the hosts file: {0}.",
   "service.hosts_refresh_offline": "GitHub is unavailable. Showing the last saved list.",
+  "service.hosts_refresh_builtin": "GitHub is unavailable. Showing the built-in list.",
   "service.hosts_startup_updated": "Address lists in the hosts file were updated at startup: {0}.",
   "service.hosts_other": "Other",
   "service.hosts_loading": "Loading lists...",

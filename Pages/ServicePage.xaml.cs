@@ -525,65 +525,16 @@ public partial class ServicePage : UserControl
         refresh.IsEnabled = false;
         try
         {
-            status.Text = Loc.T("service.hosts_loading");
-            status.Visibility = Visibility.Visible;
+            ShowHostLists(panel, status, rowsFrom, _hostsCatalog.LoadLocal(), announce: false);
+            if (load != _hostsLoad)
+                return;
+
             var snapshot = await _hostsCatalog.RefreshAppliedAsync();
             if (load != _hostsLoad)
                 return;
 
-            while (panel.Children.Count > rowsFrom)
-                panel.Children.RemoveAt(panel.Children.Count - 1);
-
-            if (snapshot.FromNetwork)
-                status.Visibility = Visibility.Collapsed;
-            else
-            {
-                status.Text = Loc.T("service.hosts_refresh_offline");
-                status.Visibility = Visibility.Visible;
-            }
-
-            var lists = snapshot.Sections;
-            if (announce && Window.GetWindow(this) is MainWindow window)
-            {
-                window.ShowToast(snapshot.UpdatedBlocks > 0
-                    ? Loc.F("service.hosts_refresh_updated", snapshot.UpdatedBlocks)
-                    : snapshot.FromNetwork
-                        ? Loc.T("service.hosts_refresh_ok")
-                        : Loc.T("service.hosts_refresh_offline"));
-            }
-            var hidden = new List<UIElement>();
-            for (var i = 0; i < lists.Count; i++)
-            {
-                var row = HostToggleRow(lists[i]);
-                if (i >= 5)
-                {
-                    row.Visibility = Visibility.Collapsed;
-                    hidden.Add(row);
-                }
-
-                panel.Children.Add(row);
-            }
-
-            if (hidden.Count == 0)
-                return;
-
-            var more = new Button
-            {
-                Content = Loc.F("service.hosts_show_all", hidden.Count),
-                Style = (Style)Application.Current.FindResource("SecondaryButton"),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 12, 0, 0)
-            };
-            more.Click += (_, _) =>
-            {
-                var open = hidden[0].Visibility != Visibility.Visible;
-                foreach (var item in hidden)
-                    item.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
-                more.Content = open
-                    ? Loc.T("service.hosts_hide")
-                    : Loc.F("service.hosts_show_all", hidden.Count);
-            };
-            panel.Children.Add(more);
+            if (snapshot.FromNetwork || announce)
+                ShowHostLists(panel, status, rowsFrom, snapshot, announce);
         }
         catch (Exception ex)
         {
@@ -597,6 +548,68 @@ public partial class ServicePage : UserControl
             if (load == _hostsLoad)
                 refresh.IsEnabled = true;
         }
+    }
+
+    private void ShowHostLists(StackPanel panel, TextBlock status, int rowsFrom, HostsCatalogSnapshot snapshot, bool announce)
+    {
+        while (panel.Children.Count > rowsFrom)
+            panel.Children.RemoveAt(panel.Children.Count - 1);
+
+        if (snapshot.FromNetwork)
+            status.Visibility = Visibility.Collapsed;
+        else
+        {
+            status.Text = Loc.T(snapshot.BuiltIn
+                ? "service.hosts_refresh_builtin"
+                : "service.hosts_refresh_offline");
+            status.Visibility = Visibility.Visible;
+        }
+
+        if (announce && Window.GetWindow(this) is MainWindow window)
+        {
+            var offline = Loc.T(snapshot.BuiltIn
+                ? "service.hosts_refresh_builtin"
+                : "service.hosts_refresh_offline");
+            window.ShowToast(snapshot.UpdatedBlocks > 0
+                ? Loc.F("service.hosts_refresh_updated", snapshot.UpdatedBlocks)
+                : snapshot.FromNetwork
+                    ? Loc.T("service.hosts_refresh_ok")
+                    : offline);
+        }
+
+        var hidden = new List<UIElement>();
+        for (var i = 0; i < snapshot.Sections.Count; i++)
+        {
+            var row = HostToggleRow(snapshot.Sections[i]);
+            if (i >= 5)
+            {
+                row.Visibility = Visibility.Collapsed;
+                hidden.Add(row);
+            }
+
+            panel.Children.Add(row);
+        }
+
+        if (hidden.Count == 0)
+            return;
+
+        var more = new Button
+        {
+            Content = Loc.F("service.hosts_show_all", hidden.Count),
+            Style = (Style)Application.Current.FindResource("SecondaryButton"),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 12, 0, 0)
+        };
+        more.Click += (_, _) =>
+        {
+            var open = hidden[0].Visibility != Visibility.Visible;
+            foreach (var item in hidden)
+                item.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
+            more.Content = open
+                ? Loc.T("service.hosts_hide")
+                : Loc.F("service.hosts_show_all", hidden.Count);
+        };
+        panel.Children.Add(more);
     }
 
     private StackPanel HostToggleRow(HostListSection list)

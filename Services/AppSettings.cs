@@ -22,6 +22,8 @@ public sealed class AppSettings
     public string HomeBackground { get; set; } = "wavy";
     /// <summary>Язык интерфейса: ru или en.</summary>
     public string Language { get; set; } = "ru";
+    /// <summary>Тема: dark, light или windows. По умолчанию тёмная.</summary>
+    public string Theme { get; set; } = "dark";
     /// <summary>Автозапуск: Aeroway в трее и последний выбранный пресет при входе в Windows.</summary>
     public bool StartUiOnLogin { get; set; }
     /// <summary>Устарело: объединено с StartUiOnLogin.</summary>

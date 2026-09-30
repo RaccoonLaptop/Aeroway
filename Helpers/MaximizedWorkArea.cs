@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
 
 namespace ZapretUI.Helpers;
 
@@ -17,12 +18,17 @@ public static class MaximizedWorkArea
     {
         window.SourceInitialized += (_, _) =>
         {
-            if (PresentationSource.FromVisual(window) is HwndSource source)
-                source.AddHook(Hook);
+            if (PresentationSource.FromVisual(window) is not HwndSource source)
+                return;
+
+            source.AddHook(Hook);
+
+            IntPtr Hook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) =>
+                OnMinMax(window, hwnd, msg, wParam, lParam, ref handled);
         };
     }
 
-    private static IntPtr Hook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    private static IntPtr OnMinMax(Window window, IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         if (msg != WmGetMinMaxInfo)
             return IntPtr.Zero;
@@ -42,7 +48,16 @@ public static class MaximizedWorkArea
         info.ptMaxPosition.y = work.top - screen.top;
         info.ptMaxSize.x = work.right - work.left;
         info.ptMaxSize.y = work.bottom - work.top;
-        Marshal.StructureToPtr(info, lParam, true);
+
+        var dpi = VisualTreeHelper.GetDpi(window);
+        var minW = (int)Math.Ceiling(window.MinWidth * dpi.DpiScaleX);
+        var minH = (int)Math.Ceiling(window.MinHeight * dpi.DpiScaleY);
+        if (info.ptMinTrackSize.x < minW)
+            info.ptMinTrackSize.x = minW;
+        if (info.ptMinTrackSize.y < minH)
+            info.ptMinTrackSize.y = minH;
+
+        Marshal.StructureToPtr(info, lParam, false);
         handled = true;
         return IntPtr.Zero;
     }

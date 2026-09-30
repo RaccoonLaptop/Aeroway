@@ -88,6 +88,8 @@ public partial class App : Application
         var restart = LocalizationService.RestartPending;
         var exe = Environment.ProcessPath;
         _singleInstance?.Dispose();
+        Motion.Stop();
+        ThemeService.Stop();
         base.OnExit(e);
 
         if (restart && !string.IsNullOrWhiteSpace(exe))

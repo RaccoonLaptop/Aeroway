@@ -1,5 +1,13 @@
 # Build Aeroway-Setup.exe (self-contained, no .NET install required)
+param(
+    [ValidateSet("Release", "Debug")]
+    [string]$Configuration = "Release"
+)
 $ErrorActionPreference = "Stop"
+if ($Configuration -ne "Release") {
+    Write-Error "Inno Setup is not built from Configuration=$Configuration."
+    exit 1
+}
 $ProjectDir = $PSScriptRoot
 $StagingDir = Join-Path $ProjectDir "build\staging"
 $DistDir = Join-Path $ProjectDir "dist"
@@ -60,7 +68,7 @@ if (-not $iscc) {
 $stagingAbs = (Resolve-Path $StagingDir).Path
 $distAbs = (Resolve-Path $DistDir).Path
 
-& $iscc "/DAppVersion=$version" "/DSourceDir=$stagingAbs" "/DOutputDir=$distAbs" $IssFile
+& $iscc "/DAppVersion=$version" "/DConfiguration=Release" "/DSourceDir=$stagingAbs" "/DOutputDir=$distAbs" $IssFile
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
 $setupExe = Join-Path $DistDir "Aeroway-Setup.exe"

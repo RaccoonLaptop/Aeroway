@@ -15,8 +15,10 @@ public sealed class TrayIconService : IDisposable
     private readonly Func<string, Task> _switchStrategyAsync;
     private readonly NotifyIcon _notifyIcon;
     private TrayMenuPopup? _popup;
-    private Icon? _idleIcon;
-    private Icon? _activeIcon;
+    private readonly Icon _idleIcon;
+    private readonly Icon _activeIcon;
+    private readonly Icon _faultIcon;
+    private TrayIconGenerator.Glyph _glyph = TrayIconGenerator.Glyph.Stopped;
     private bool _disposed;
     private bool _running;
     private bool _busy;
@@ -35,8 +37,9 @@ public sealed class TrayIconService : IDisposable
         _getSelectedStrategy = getSelectedStrategy;
         _switchStrategyAsync = switchStrategyAsync;
 
-        _idleIcon = TrayIconGenerator.Create(active: false);
-        _activeIcon = TrayIconGenerator.Create(active: true);
+        _idleIcon = TrayIconGenerator.Create(TrayIconGenerator.Glyph.Stopped);
+        _activeIcon = TrayIconGenerator.Create(TrayIconGenerator.Glyph.Running);
+        _faultIcon = TrayIconGenerator.Create(TrayIconGenerator.Glyph.Fault);
 
         _notifyIcon = new NotifyIcon
         {
@@ -74,13 +77,26 @@ public sealed class TrayIconService : IDisposable
         });
     }
 
-    public void UpdateState(bool running, string? strategyTitle, bool busy)
+    public void UpdateState(bool running, string? strategyTitle, bool busy, bool fault = false)
     {
         _running = running;
         _busy = busy;
         _strategyTitle = strategyTitle;
 
-        _notifyIcon.Icon = running ? _activeIcon : _idleIcon;
+        var glyph = fault
+            ? TrayIconGenerator.Glyph.Fault
+            : running ? TrayIconGenerator.Glyph.Running : TrayIconGenerator.Glyph.Stopped;
+        if (glyph != _glyph)
+        {
+            _glyph = glyph;
+            _notifyIcon.Icon = glyph switch
+            {
+                TrayIconGenerator.Glyph.Fault => _faultIcon,
+                TrayIconGenerator.Glyph.Running => _activeIcon,
+                _ => _idleIcon
+            };
+        }
+
         _notifyIcon.Text = busy
             ? Loc.T("tray.status.starting")
             : (running
@@ -135,7 +151,8 @@ public sealed class TrayIconService : IDisposable
         _notifyIcon.Visible = false;
         _notifyIcon.Dispose();
         _popup?.Close();
-        _idleIcon?.Dispose();
-        _activeIcon?.Dispose();
+        _idleIcon.Dispose();
+        _activeIcon.Dispose();
+        _faultIcon.Dispose();
     }
 }

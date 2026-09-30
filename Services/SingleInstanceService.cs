@@ -5,8 +5,13 @@ namespace ZapretUI.Services;
 
 public sealed class SingleInstanceService : IDisposable
 {
+#if DEBUG
+    private const string MutexName = "Global\\ZapretUI_SingleInstance-dev";
+    private const string PipeName = "ZapretUI.ShowWindow-dev";
+#else
     private const string MutexName = "Global\\ZapretUI_SingleInstance";
     private const string PipeName = "ZapretUI.ShowWindow";
+#endif
 
     private readonly Mutex _mutex;
     private CancellationTokenSource? _listenCts;

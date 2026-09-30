@@ -21,7 +21,16 @@ public static class TrayIconGenerator
     private static readonly DColor ArcIdle = DColor.FromArgb(244, 231, 198);
     private static readonly DColor ArcActive = DColor.FromArgb(143, 212, 96);
 
-    public static Icon Create(bool active)
+    public enum Glyph
+    {
+        Stopped,
+        Running,
+        Fault
+    }
+
+    public static Icon Create(bool active) => Create(active ? Glyph.Running : Glyph.Stopped);
+
+    public static Icon Create(Glyph glyph)
     {
         const int size = 32;
         using var bmp = new Bitmap(size, size, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -42,8 +51,10 @@ public static class TrayIconGenerator
                        135f))
                 g.FillEllipse(grad, outer);
 
-            var ringColor = active ? RingActive : RingIdle;
-            var arcColor = active ? ArcActive : ArcIdle;
+            var fault = glyph == Glyph.Fault;
+            var running = glyph == Glyph.Running;
+            var ringColor = fault ? DColor.FromArgb(240, 112, 136) : running ? RingActive : RingIdle;
+            var arcColor = fault ? DColor.FromArgb(240, 112, 136) : running ? ArcActive : ArcIdle;
             var ringWidth = Math.Max(1f, 10f * scale);
             var arcWidth = Math.Max(1f, 9f * scale);
 

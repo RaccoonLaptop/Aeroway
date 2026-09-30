@@ -9,7 +9,17 @@ namespace ZapretUI.Helpers;
 public static class UiHelpers
 {
     public static void ShowError(string message, Window? owner = null) =>
-        RunOnUiThread(() => MessageWindow.Show(message, Loc.T("app.title"), owner ?? GetActiveWindow()));
+        RunOnUiThread(() =>
+        {
+            var window = owner ?? GetActiveWindow();
+            if (window is MainWindow main)
+            {
+                main.ShowToast(message, error: true);
+                return;
+            }
+
+            MessageWindow.Show(message, Loc.T("app.title"), window);
+        });
 
     public static void ShowInfo(string message, Window? owner = null) =>
         RunOnUiThread(() => MessageWindow.Show(message, Loc.T("app.title"), owner ?? GetActiveWindow()));

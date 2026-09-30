@@ -3,36 +3,37 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:controls="clr-namespace:ZapretUI.Controls"
-        Title="Aeroway — Niko"
+        Title="Aeroway"
         Icon="pack://application:,,,/Assets/app.ico"
-        Height="720" Width="1100"
-        MinHeight="560" MinWidth="900"
+        Height="760" Width="1180"
+        MinHeight="680" MinWidth="1080"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="CanResizeWithGrip"
-        Background="Transparent">
+        Background="{DynamicResource BgBrush}">
     <shell:WindowChrome.WindowChrome>
-        <shell:WindowChrome CaptionHeight="44"
+        <shell:WindowChrome CaptionHeight="48"
                             ResizeBorderThickness="6"
                             CornerRadius="0"
                             GlassFrameThickness="0"
                             UseAeroCaptionButtons="False"/>
     </shell:WindowChrome.WindowChrome>
-    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Background="Transparent">
+    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Background="{DynamicResource BgBrush}" SnapsToDevicePixels="True">
         <Grid>
             <controls:HomeBackgroundHost x:Name="AppBackgroundHost"
-                                           HorizontalAlignment="Stretch"
-                                           VerticalAlignment="Stretch"/>
-
+                                         HorizontalAlignment="Stretch"
+                                         VerticalAlignment="Stretch"/>
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="44"/>
+                    <RowDefinition Height="48"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
                 <Border Grid.Row="0"
-                        Background="{StaticResource TitleBarOverlayBrush}"
-                        BorderBrush="{StaticResource BorderBrush}"
+                        Background="{DynamicResource TitleBarOverlayBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1"
                         MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <Grid>
@@ -40,10 +41,13 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
-                            <Image Source="Assets/source.png" Width="20" Height="20" Stretch="Uniform"/>
-                            <TextBlock Text="Aeroway" Margin="8,0,0,0" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="TitleBarAuthor" Text="• Автор: Niko" Margin="8,0,0,0" Foreground="{StaticResource TextMutedBrush}" FontSize="12"/>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                            <Image Source="Assets/source.png" Width="18" Height="18" Stretch="Uniform"/>
+                            <TextBlock Text="Aeroway" Margin="10,0,0,0" FontWeight="SemiBold" FontSize="14"/>
+                            <Border x:Name="DevMark" Margin="8,0,0,0" CornerRadius="8" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" Padding="6,1" VerticalAlignment="Center" Background="{DynamicResource SurfaceBrush}">
+                                <TextBlock Text="DEV" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"/>
+                            </Border>
+                            <TextBlock x:Name="TitleBarAuthor" Text="• Автор: Niko" Margin="10,0,0,0" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
                             <Button Content="—" Style="{StaticResource TitleBarButton}" Click="MinimizeButton_Click"/>
@@ -53,41 +57,63 @@
                     </Grid>
                 </Border>
 
-                <Grid Grid.Row="1">
+                <Grid x:Name="BodyGrid" Grid.Row="1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="220"/>
+                        <ColumnDefinition Width="248"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="{StaticResource ShellOverlayBrush}" Padding="14">
-                        <DockPanel LastChildFill="True">
-                            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20">
-                                <TextBlock Text="Aeroway" FontSize="20" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
-                                <TextBlock x:Name="VersionText" Text="v1.2.8" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
-                            </StackPanel>
-
-                            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
-                                <Border Background="#CC0d2240"
-                                        BorderBrush="{StaticResource BorderBrush}"
+                    <Border x:Name="SidebarHost" Grid.Column="0" Background="{DynamicResource SidebarBrush}" Padding="16,12,16,16">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                                <Border Background="{DynamicResource StatusCardBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
-                                        CornerRadius="8"
-                                        Padding="10"
+                                        CornerRadius="14"
+                                        Padding="10,7"
+                                        RenderTransformOrigin="0.5,0.5"
                                         x:Name="StatusBorder">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform x:Name="StatusScale"/>
+                                    </Border.RenderTransform>
                                     <StackPanel>
-                                        <TextBlock x:Name="StatusHeader" Text="Статус" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
-                                        <Grid Margin="0,6,0,0">
+                                        <TextBlock x:Name="StatusHeader" Text="Статус" FontSize="11" Visibility="Collapsed"/>
+                                        <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
-                                            <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="{StaticResource ErrorBrush}" VerticalAlignment="Top" Margin="0,4,0,0"/>
-                                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                            <Grid Width="14" Height="14" VerticalAlignment="Center">
+                                                <Ellipse x:Name="StatusHalo" Width="7" Height="7"
+                                                         Fill="{DynamicResource SuccessBrush}" Opacity="0"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                         RenderTransformOrigin="0.5,0.5">
+                                                    <Ellipse.RenderTransform>
+                                                        <ScaleTransform x:Name="StatusHaloScale"/>
+                                                    </Ellipse.RenderTransform>
+                                                </Ellipse>
+                                                <Ellipse x:Name="StatusDot" Width="7" Height="7"
+                                                         Fill="{DynamicResource ErrorBrush}"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
                                                 <TextBlock x:Name="StatusText" Text="Остановлен" FontWeight="SemiBold" FontSize="13"/>
-                                                <TextBlock x:Name="StatusPresetText"
-                                                           FontSize="11"
-                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                <TextBlock x:Name="StatusStrategyText"
+                                                           FontSize="12"
+                                                           FontWeight="SemiBold"
                                                            TextWrapping="Wrap"
-                                                           Margin="0,2,0,0"
+                                                           Margin="0,1,0,0"
+                                                           Visibility="Collapsed"/>
+                                                <TextBlock x:Name="StatusPresetText"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextMutedBrush}"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,1,0,0"
                                                            Visibility="Collapsed"/>
                                             </StackPanel>
                                         </Grid>
@@ -95,15 +121,49 @@
                                 </Border>
                             </StackPanel>
 
-                            <StackPanel x:Name="ExternalLinksPanel" DockPanel.Dock="Bottom" Margin="0,12,0,0"/>
-
-                            <StackPanel x:Name="NavPanel" DockPanel.Dock="Top"/>
-                        </DockPanel>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
+                                <StackPanel x:Name="NavPanel"/>
+                            </ScrollViewer>
+                            <Border x:Name="LinksCard" Grid.Row="2" Margin="0,18,0,0"
+                                    Background="{DynamicResource LinksCardBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="16"
+                                    Padding="10,10">
+                                <StackPanel>
+                                    <TextBlock x:Name="VersionText" Text="v1.2.8" FontSize="11"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               TextAlignment="Center" TextWrapping="Wrap"
+                                               HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                                    <StackPanel x:Name="ExternalLinksPanel" Orientation="Horizontal" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
                     </Border>
 
                     <Grid Grid.Column="1">
-                        <ContentControl x:Name="PageHost" Margin="24" Background="Transparent"/>
+                        <ContentControl x:Name="PageHost" Margin="28,8,28,28" Background="Transparent"/>
+                        <Border x:Name="Toast"
+                                IsHitTestVisible="False"
+                                Opacity="0"
+                                Visibility="Collapsed"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Bottom"
+                                Margin="0,0,0,28"
+                                Padding="16,10"
+                                CornerRadius="12"
+                                SnapsToDevicePixels="True"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                Panel.ZIndex="4">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="ToastShift" Y="8"/>
+                            </Border.RenderTransform>
+                            <TextBlock x:Name="ToastText" FontSize="13" TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center"/>
+                        </Border>
                         <Button x:Name="BgSwitchBtn"
+                                Visibility="Collapsed"
                                 Style="{StaticResource SecondaryButton}"
                                 FontSize="11"
                                 Padding="10,4"

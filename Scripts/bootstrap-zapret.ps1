@@ -51,7 +51,7 @@ if (Test-ZapretRoot $TargetDir) {
 }
 
 $bundledSource = Join-Path (Split-Path $PSScriptRoot -Parent) 'packaging\zapret'
-$headers = @{ 'User-Agent' = 'ZapretUI-Installer' }
+$headers = @{ 'User-Agent' = 'Aeroway' }
 
 try {
     Write-Host 'Fetching latest Flowseal release...'

@@ -29,14 +29,37 @@ public static class MouseWheelScrollHelper
     {
         editor.PreviewMouseWheel += (_, e) =>
         {
-            var steps = Math.Max(1, Math.Abs(e.Delta) / 120) * 3;
-            var line = editor.TextArea.Caret.Line;
-            var target = e.Delta > 0
-                ? Math.Max(0, line - steps)
-                : Math.Min(Math.Max(0, editor.LineCount - 1), line + steps);
-            editor.ScrollToLine(target);
-            e.Handled = true;
+            if (ScrollTextEditor(editor, e))
+                e.Handled = true;
         };
+    }
+
+    private static bool ScrollTextEditor(TextEditor editor, MouseWheelEventArgs e)
+    {
+        var max = Math.Max(0, editor.ExtentHeight - editor.ViewportHeight);
+        if (max <= 0)
+            return false;
+
+        var lineHeight = editor.TextArea.TextView.DefaultLineHeight;
+        if (lineHeight < 1)
+            lineHeight = editor.FontSize + 3;
+
+        var linesPerNotch = SystemParameters.WheelScrollLines;
+        if (linesPerNotch < 1)
+            linesPerNotch = 3;
+
+        var distance = Math.Abs(e.Delta) / 120.0 * linesPerNotch * lineHeight;
+        var next = editor.VerticalOffset + (e.Delta > 0 ? -distance : distance);
+        if (next < 0)
+            next = 0;
+        else if (next > max)
+            next = max;
+
+        if (Math.Abs(next - editor.VerticalOffset) < 0.5)
+            return false;
+
+        editor.ScrollToVerticalOffset(next);
+        return true;
     }
 
     public static void Attach(ListBox listBox)

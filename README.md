@@ -21,7 +21,7 @@
 
 Удобная оболочка для конфигов [Flowseal/zapret-discord-youtube](https://github.com/Flowseal/zapret-discord-youtube) и движка [zapret](https://github.com/bol-van/zapret) (`winws`). Не нужно разбираться в командной строке: выбрали стратегию и нажали **Запустить**.
 
-Раньше программа называлась Zapret UI. Уже установленная версия обновляется сама.
+Уже установленная Aeroway обновляется сама.
 
 Новости и вопросы — в [Telegram-канале Aeroway](https://t.me/AerowayUI).
 

@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using ZapretUI.Controls.Backgrounds;
@@ -27,16 +28,29 @@ public partial class MainWindow : Window
     private const string GitHubUrl = "https://github.com/RaccoonLaptop/Aeroway";
     private const string DonateUrl = "https://raccoonlaptop.github.io/Aeroway/donate.html";
     private Button? _activeNav;
+    private readonly Dictionary<string, NavSlot> _nav = new();
+    private int _statusVisual = -1;
+    private bool _haloOn;
     private string _activeSection = "home";
     private HomePage? _homePage;
+    private DateTime? _runningSince;
     private TestStrategiesPage? _testStrategiesPage;
     private bool _isShuttingDown;
+    private DispatcherTimer? _toastTimer;
 
     public MainWindow(bool startInTray = false)
     {
         _startInTray = startInTray;
         _settings = AppSettings.Load();
         InitializeComponent();
+        SidebarHost.SizeChanged += (_, _) => RateChart.MenuInset = SidebarHost.ActualWidth;
+#if DEBUG
+        Title = "Aeroway Dev";
+#else
+        DevMark.Visibility = Visibility.Collapsed;
+#endif
+        ThemeService.Apply(_settings.Theme);
+        ThemeService.Start();
         RestoreWindowBounds();
         ApplyShellLocalization();
         AppIcon.ApplyTo(this);
@@ -104,6 +118,22 @@ public partial class MainWindow : Window
 
             if (_startInTray)
                 await TryAutoStartBypassOnLoginAsync();
+
+            await RefreshAppliedHostListsAsync();
+        }
+        catch (Exception ex)
+        {
+            ConsoleLog.Instance.Write(Loc.F("startup.error", ex.Message));
+        }
+    }
+
+    private async Task RefreshAppliedHostListsAsync()
+    {
+        try
+        {
+            var snapshot = await new HostsCatalogService(new UpdateService(_paths)).RefreshAppliedAsync();
+            if (snapshot.UpdatedBlocks > 0)
+                ShowToast(Loc.F("service.hosts_startup_updated", snapshot.UpdatedBlocks));
         }
         catch (Exception ex)
         {
@@ -121,6 +151,7 @@ public partial class MainWindow : Window
 
         NavPanel.Children.Clear();
         ExternalLinksPanel.Children.Clear();
+        _nav.Clear();
         _activeNav = null;
         BuildNavigation();
         NavigateToSection(_activeSection);
@@ -333,8 +364,10 @@ public partial class MainWindow : Window
     private void InitAppBackground()
     {
         AnimatedBackgroundBase.GlobalSpeed = BackgroundMotion.DefaultSpeed;
-        AppBackgroundHost.SetBackground(_settings.HomeBackground, BackgroundMotion.DefaultSpeed);
+        AppBackgroundHost.SetBackground("wavy", BackgroundMotion.DefaultSpeed);
         UpdateBgSwitchLabel();
+        var (_, waveLabel) = HomeBackgroundCatalog.Get("wavy");
+        BgSwitchBtn.Content = $"✦  {waveLabel}";
 
         BgSwitchBtn.MouseEnter += (_, _) => BgSwitchBtn.Opacity = 0.72;
         BgSwitchBtn.MouseLeave += (_, _) => BgSwitchBtn.Opacity = 0.38;
@@ -410,33 +443,24 @@ public partial class MainWindow : Window
 
     private void AddExternalButton(string styleKey, Geometry icon, string text, string tip, string url, Thickness margin)
     {
+        _ = styleKey;
+        _ = margin;
         var mark = new System.Windows.Shapes.Path
         {
             Data = icon,
-            Fill = Brushes.White,
+            Fill = text == Loc.T("nav.donate")
+                ? (Brush)FindResource("AccentBrush")
+                : (Brush)FindResource("TextBrush"),
             Stretch = Stretch.Uniform,
-            Width = 12,
-            Height = 12,
-            VerticalAlignment = VerticalAlignment.Center
+            Width = 15,
+            Height = 15
         };
-        var label = new TextBlock
-        {
-            Text = text,
-            FontSize = 11,
-            Foreground = Brushes.White,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(6, 0, 0, 0)
-        };
-        var content = new StackPanel { Orientation = Orientation.Horizontal };
-        content.Children.Add(mark);
-        content.Children.Add(label);
-
         var btn = new Button
         {
-            Content = content,
-            Style = (Style)FindResource(styleKey),
-            Margin = margin,
-            ToolTip = tip
+            Content = mark,
+            Style = (Style)FindResource("IconButton"),
+            Margin = new Thickness(5, 0, 5, 0),
+            ToolTip = string.IsNullOrWhiteSpace(tip) ? text : tip
         };
         btn.Click += (_, _) =>
         {
@@ -447,6 +471,8 @@ public partial class MainWindow : Window
         };
         ExternalLinksPanel.Children.Add(btn);
     }
+
+    public void ReloadActivePage() => NavigateToSection(_activeSection);
 
     private void NavigateToSection(string sectionId)
     {
@@ -488,13 +514,33 @@ public partial class MainWindow : Window
 
     private void AddNav(string text, string sectionId, Action action)
     {
+        var marker = new Border
+        {
+            Width = 3,
+            Height = 16,
+            CornerRadius = new CornerRadius(2),
+            Background = (Brush)FindResource("AccentBrush"),
+            Opacity = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(2, 0, 10, 0)
+        };
+        var label = new TextBlock
+        {
+            Text = text,
+            FontSize = 14,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        var row = new StackPanel { Orientation = Orientation.Horizontal };
+        row.Children.Add(marker);
+        row.Children.Add(label);
+
         var btn = new Button
         {
-            Content = text,
+            Content = row,
             Tag = sectionId,
             Style = (Style)FindResource("NavButton"),
             HorizontalContentAlignment = HorizontalAlignment.Left,
-            Margin = new Thickness(0, 2, 0, 2)
+            Margin = new Thickness(0, 1, 0, 1)
         };
         btn.Click += (_, _) =>
         {
@@ -503,52 +549,192 @@ public partial class MainWindow : Window
             action();
         };
         NavPanel.Children.Add(btn);
+        _nav[sectionId] = new NavSlot(btn, marker, label);
         if (_activeSection == sectionId)
-        {
-            _activeNav = btn;
-            btn.Style = (Style)FindResource("NavButtonActive");
-        }
+            SetActiveNav(btn);
     }
 
     private void SetActiveNav(Button btn)
     {
-        if (_activeNav is not null)
-            _activeNav.Style = (Style)FindResource("NavButton");
+        var accent = (Brush)FindResource("AccentBrush");
+        var text = (Brush)FindResource("TextBrush");
+        foreach (var slot in _nav.Values)
+        {
+            var on = ReferenceEquals(slot.Button, btn);
+            slot.Label.Foreground = on ? accent : text;
+            slot.Label.FontWeight = on ? FontWeights.SemiBold : FontWeights.Normal;
+            slot.Marker.BeginAnimation(OpacityProperty, new DoubleAnimation(on ? 1 : 0, TimeSpan.FromMilliseconds(180))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            });
+        }
         _activeNav = btn;
-        btn.Style = (Style)FindResource("NavButtonActive");
     }
 
-    private void Navigate(UserControl page) => PageHost.Content = page;
+    public void ShowToast(string text, bool error = false)
+    {
+        ToastText.Text = text;
+        ToastText.Foreground = (Brush)FindResource(error ? "ErrorBrush" : "SuccessBrush");
+        Toast.Visibility = Visibility.Visible;
+        var opacity = Toast.Opacity;
+        Toast.BeginAnimation(OpacityProperty, null);
+        var y = ToastShift.Y;
+        ToastShift.BeginAnimation(TranslateTransform.YProperty, null);
+        if (opacity < 0.05)
+        {
+            Toast.Opacity = 0;
+            ToastShift.Y = 8;
+        }
+        else
+        {
+            Toast.Opacity = opacity;
+            ToastShift.Y = y;
+        }
+
+        Motion.To(Toast, OpacityProperty, 1, TimeSpan.FromMilliseconds(Motion.ToastIn));
+        Motion.To(ToastShift, TranslateTransform.YProperty, 0, TimeSpan.FromMilliseconds(Motion.ToastIn));
+        RestartToastTimer();
+    }
+
+    private void RestartToastTimer()
+    {
+        _toastTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(Motion.ToastHold) };
+        _toastTimer.Stop();
+        _toastTimer.Tick -= ToastHoldElapsed;
+        _toastTimer.Tick += ToastHoldElapsed;
+        _toastTimer.Start();
+    }
+
+    private void ToastHoldElapsed(object? sender, EventArgs e)
+    {
+        _toastTimer?.Stop();
+        Motion.To(Toast, OpacityProperty, 0, TimeSpan.FromMilliseconds(Motion.ToastOut));
+        Motion.To(ToastShift, TranslateTransform.YProperty, 8, TimeSpan.FromMilliseconds(Motion.ToastOut));
+    }
+
+    private void Navigate(UserControl page)
+    {
+        if (PageHost.Content is TestStrategiesPage oldTest && !ReferenceEquals(oldTest, page))
+        {
+            oldTest.SaveSession();
+            _ = oldTest.DisposePanelAsync();
+            if (ReferenceEquals(_testStrategiesPage, oldTest))
+                _testStrategiesPage = null;
+        }
+
+        if (!ReferenceEquals(PageHost.Content, page))
+            PageHost.Content = page;
+        Motion.Reveal(page);
+    }
 
     private void RefreshStatus()
     {
         var running = _strategy.IsRunning();
-        StatusDot.Fill = running
-            ? (Brush)FindResource("SuccessBrush")
-            : (Brush)FindResource("ErrorBrush");
+        if (running && _runningSince is null)
+            _runningSince = DateTime.UtcNow;
+        if (!running)
+            _runningSince = null;
 
-        var title = running ? _strategy.GetRunningStrategyTitle() : null;
-        if (running && !string.IsNullOrEmpty(title))
+        var current = _strategy.GetRunningStrategyTitle();
+        NetFlow.EnsureRunning();
+        SitePulse.Tick(running);
+
+        var mode = running ? 1 : 0;
+        if (mode != _statusVisual)
         {
-            StatusText.Text = Loc.T("status.running");
-            StatusPresetText.Text = title;
-            StatusPresetText.Visibility = Visibility.Visible;
-            StatusBorder.ToolTip = Loc.F("status.running_with", title);
+            _statusVisual = mode;
+            ApplyStatusChrome(mode);
+        }
+
+        StatusText.Text = running ? Loc.T("status.running") : Loc.T("status.stopped");
+        var timer = "";
+        if (mode == 1 && _runningSince is { } startedNow)
+        {
+            var elapsed = DateTime.UtcNow - startedNow;
+            timer = elapsed.TotalHours >= 1
+                ? elapsed.ToString(@"h\:mm\:ss")
+                : elapsed.ToString(@"mm\:ss");
+        }
+
+        if (running && !string.IsNullOrWhiteSpace(current))
+        {
+            StatusStrategyText.Text = string.IsNullOrEmpty(timer) ? current : $"{current}  ·  {timer}";
+            StatusStrategyText.Visibility = Visibility.Visible;
         }
         else
         {
-            StatusText.Text = running ? Loc.T("status.running") : Loc.T("status.stopped");
-            StatusPresetText.Visibility = Visibility.Collapsed;
-            StatusPresetText.Text = "";
-            StatusBorder.ToolTip = null;
+            StatusStrategyText.Text = "";
+            StatusStrategyText.Visibility = Visibility.Collapsed;
         }
 
+        StatusPresetText.Visibility = Visibility.Collapsed;
+        StatusPresetText.Text = "";
+        StatusBorder.ToolTip = mode == 1 ? current : null;
+
+        SyncHalo(running);
         _homePage?.RefreshToggleUi();
         _tray.UpdateState(
             running,
             _strategy.GetRunningStrategyTitle(),
-            _homePage?.IsBypassBusy ?? false);
+            _homePage?.IsBypassBusy ?? false,
+            false);
     }
+
+    private void ApplyStatusChrome(int mode)
+    {
+        if (mode == 1)
+        {
+            StatusDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "SuccessBrush");
+            StatusHalo.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "SuccessBrush");
+            StatusText.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+            StatusStrategyText.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+            StatusPresetText.SetResourceReference(TextBlock.ForegroundProperty, "AccentBrush");
+            StatusPresetText.FontSize = 12;
+            StatusPresetText.FontWeight = FontWeights.SemiBold;
+            StatusBorder.SetResourceReference(Border.BackgroundProperty, "StopFillBrush");
+            StatusBorder.SetResourceReference(Border.BorderBrushProperty, "SuccessBrush");
+            return;
+        }
+
+        StatusDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, "ErrorBrush");
+        StatusText.SetResourceReference(TextBlock.ForegroundProperty, "TextMutedBrush");
+        StatusBorder.SetResourceReference(Border.BackgroundProperty, "StatusCardBrush");
+        StatusBorder.SetResourceReference(Border.BorderBrushProperty, "BorderBrush");
+    }
+
+    private void SyncHalo(bool running)
+    {
+        if (running == _haloOn)
+            return;
+        _haloOn = running;
+        if (!running)
+        {
+            StatusHalo.BeginAnimation(OpacityProperty, null);
+            StatusHaloScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            StatusHaloScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            StatusHalo.Opacity = 0;
+            return;
+        }
+
+        var fade = new DoubleAnimation(0.7, 0, TimeSpan.FromMilliseconds(1100))
+        {
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+        };
+        StatusHalo.BeginAnimation(OpacityProperty, fade);
+        StatusHaloScale.BeginAnimation(ScaleTransform.ScaleXProperty, HaloGrow());
+        StatusHaloScale.BeginAnimation(ScaleTransform.ScaleYProperty, HaloGrow());
+    }
+
+    private static DoubleAnimation HaloGrow() => new(1, 2.6, TimeSpan.FromMilliseconds(1100))
+    {
+        AutoReverse = true,
+        RepeatBehavior = RepeatBehavior.Forever,
+        EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+    };
+
+    private sealed record NavSlot(Button Button, Border Marker, TextBlock Label);
 
     private async Task SwitchStrategyFromTrayAsync(string strategy)
     {

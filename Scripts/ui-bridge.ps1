@@ -442,7 +442,7 @@ switch ($Action) {
         $downloaded = $false
         foreach ($hostsUrl in $hostsUrls) {
             try {
-                Invoke-WebRequest -Uri $hostsUrl -OutFile $tempFile -UseBasicParsing -TimeoutSec 15 -Headers @{ 'User-Agent' = 'ZapretUI' }
+                Invoke-WebRequest -Uri $hostsUrl -OutFile $tempFile -UseBasicParsing -TimeoutSec 15 -Headers @{ 'User-Agent' = 'Aeroway' }
                 if (Test-Path $tempFile) {
                     $downloaded = $true
                     break

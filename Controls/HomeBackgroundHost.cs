@@ -69,7 +69,10 @@ public sealed class HomeBackgroundHost : Grid
 
     private void OnRendering(object? sender, EventArgs e)
     {
-        if (_background is null || !IsVisible) return;
+        if (_background is null || !IsVisible)
+            return;
+        if (Window.GetWindow(this) is { WindowState: WindowState.Minimized })
+            return;
 
         var now = (DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
         if (_startMs <= 0)

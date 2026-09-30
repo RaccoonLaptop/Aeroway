@@ -56,6 +56,17 @@ public sealed class UpdateService
         return true;
     }
 
+    public Task<string> DownloadFlowsealHostsAsync(CancellationToken ct = default) =>
+        GetReferenceHostsContentAsync(ct);
+
+    public async Task<(string Content, bool FromNetwork)> DownloadFlowsealHostsRemoteFirstAsync(CancellationToken ct = default)
+    {
+        var remote = await TryDownloadRemoteHostsAsync(ct).ConfigureAwait(false);
+        if (!string.IsNullOrWhiteSpace(remote))
+            return (remote, true);
+        return (await GetReferenceHostsContentAsync(ct).ConfigureAwait(false), false);
+    }
+
     public async Task<HostsUpdateResult> PrepareHostsUpdateAsync(CancellationToken ct = default)
     {
         try
@@ -127,12 +138,21 @@ public sealed class UpdateService
                 return content;
         }
 
+        var remote = await TryDownloadRemoteHostsAsync(ct).ConfigureAwait(false);
+        if (!string.IsNullOrWhiteSpace(remote))
+            return remote;
+
+        throw new InvalidOperationException("Failed to download hosts file and no local fallback is available.");
+    }
+
+    private async Task<string?> TryDownloadRemoteHostsAsync(CancellationToken ct)
+    {
         foreach (var url in HostsUrls)
         {
             try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.UserAgent.Add(new ProductInfoHeaderValue("ZapretUI", "1.0"));
+                request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Aeroway", "1.0"));
                 request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
                 var response = await _http.SendAsync(request, ct).ConfigureAwait(false);
                 if (!response.IsSuccessStatusCode)
@@ -148,7 +168,7 @@ public sealed class UpdateService
             }
         }
 
-        throw new InvalidOperationException("Failed to download hosts file and no local fallback is available.");
+        return null;
     }
 
     private IEnumerable<string> GetLocalHostsFallbackPaths()

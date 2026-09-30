@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using ICSharpCode.AvalonEdit;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -23,6 +25,8 @@ public partial class ServicePage : UserControl
     private readonly AppSettings _settings;
     private readonly ServiceSettingsService _settingsSvc;
     private readonly UpdateService _updates;
+    private readonly HostsCatalogService _hostsCatalog;
+    private bool _hostsGuard;
     private TextBlock _gameFilterStatus = null!;
     private TextBlock _ipsetStatus = null!;
     private Button _gameDisabledBtn = null!;
@@ -48,6 +52,7 @@ public partial class ServicePage : UserControl
         _settings = settings;
         _settingsSvc = new ServiceSettingsService(paths);
         _updates = new UpdateService(paths);
+        _hostsCatalog = new HostsCatalogService(_updates);
         BuildUi();
         RefreshStatuses();
         Unloaded += (_, _) => _portsFeedbackTimer?.Stop();
@@ -139,6 +144,46 @@ public partial class ServicePage : UserControl
 
         setCard.Child = setStack;
         root.Children.Add(setCard);
+
+        root.Children.Add(Section(Loc.T("service.section_hosts")));
+        var hostsCard = Card();
+        var hostsStack = new StackPanel();
+        hostsStack.Children.Add(new TextBlock
+        {
+            Text = Loc.T("service.hosts_desc"),
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = (Brush)Application.Current.FindResource("TextMutedBrush"),
+            Margin = new Thickness(0, 0, 0, 8)
+        });
+        var hostsActions = new WrapPanel { Margin = new Thickness(0, 0, 0, 4) };
+        var openHostsFolder = new Button
+        {
+            Content = Loc.T("service.hosts_open_folder"),
+            Style = (Style)Application.Current.FindResource("SecondaryButton"),
+            Margin = new Thickness(0, 0, 8, 8)
+        };
+        openHostsFolder.Click += (_, _) => OpenHostsFolder();
+        var refreshHosts = new Button
+        {
+            Content = Loc.T("service.hosts_refresh"),
+            Style = (Style)Application.Current.FindResource("SecondaryButton"),
+            Margin = new Thickness(0, 0, 8, 8)
+        };
+        hostsActions.Children.Add(openHostsFolder);
+        hostsActions.Children.Add(refreshHosts);
+        hostsStack.Children.Add(hostsActions);
+        var hostsStatus = new TextBlock
+        {
+            Text = Loc.T("service.hosts_loading"),
+            Foreground = (Brush)Application.Current.FindResource("TextMutedBrush"),
+            Margin = new Thickness(0, 4, 0, 0)
+        };
+        hostsStack.Children.Add(hostsStatus);
+        hostsCard.Child = hostsStack;
+        root.Children.Add(hostsCard);
+        var hostsRowsFrom = hostsStack.Children.Count;
+        Loaded += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, hostsRowsFrom, announce: false);
+        refreshHosts.Click += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, hostsRowsFrom, announce: true);
 
         // Updates
         root.Children.Add(Section(Loc.T("service.section_updates")));
@@ -269,6 +314,50 @@ public partial class ServicePage : UserControl
         langStack.Children.Add(langCombo);
         langCard.Child = langStack;
         root.Children.Add(langCard);
+
+        root.Children.Add(Section(Loc.T("service.section_theme")));
+        var themeCard = Card();
+        var themeStack = new StackPanel();
+        themeStack.Children.Add(new TextBlock
+        {
+            Text = Loc.T("service.theme_desc"),
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = (Brush)Application.Current.FindResource("TextMutedBrush"),
+            Margin = new Thickness(0, 0, 0, 12)
+        });
+        var themeCombo = new ComboBox
+        {
+            MinWidth = 240,
+            HorizontalAlignment = HorizontalAlignment.Left
+        };
+        themeCombo.Items.Add(Loc.T("service.theme_windows"));
+        themeCombo.Items.Add(Loc.T("service.theme_dark"));
+        themeCombo.Items.Add(Loc.T("service.theme_light"));
+        themeCombo.SelectedIndex = _settings.Theme switch
+        {
+            ThemeService.Windows => 0,
+            ThemeService.Light => 2,
+            _ => 1
+        };
+        themeCombo.SelectionChanged += (_, _) =>
+        {
+            var next = themeCombo.SelectedIndex switch
+            {
+                0 => ThemeService.Windows,
+                2 => ThemeService.Light,
+                _ => ThemeService.Dark
+            };
+            if (string.Equals(_settings.Theme, next, StringComparison.OrdinalIgnoreCase))
+                return;
+            _settings.Theme = next;
+            _settings.Save();
+            ThemeService.Apply(next);
+            if (Application.Current.MainWindow is MainWindow window)
+                window.ReloadActivePage();
+        };
+        themeStack.Children.Add(themeCombo);
+        themeCard.Child = themeStack;
+        root.Children.Add(themeCard);
 
         // Links
         root.Children.Add(Section(Loc.T("service.section_links")));
@@ -425,6 +514,180 @@ public partial class ServicePage : UserControl
         catch (Exception ex)
         {
             UiHelpers.ShowResult(OwnerWindow, Loc.T("dialog.ipset_list"), $"{Loc.T("common.error_prefix")} {ex.Message}");
+        }
+    }
+
+    private int _hostsLoad;
+
+    private async Task LoadHostTogglesAsync(StackPanel panel, TextBlock status, Button refresh, int rowsFrom, bool announce)
+    {
+        var load = ++_hostsLoad;
+        refresh.IsEnabled = false;
+        try
+        {
+            status.Text = Loc.T("service.hosts_loading");
+            status.Visibility = Visibility.Visible;
+            var snapshot = await _hostsCatalog.RefreshAppliedAsync();
+            if (load != _hostsLoad)
+                return;
+
+            while (panel.Children.Count > rowsFrom)
+                panel.Children.RemoveAt(panel.Children.Count - 1);
+
+            if (snapshot.FromNetwork)
+                status.Visibility = Visibility.Collapsed;
+            else
+            {
+                status.Text = Loc.T("service.hosts_refresh_offline");
+                status.Visibility = Visibility.Visible;
+            }
+
+            var lists = snapshot.Sections;
+            if (announce && Window.GetWindow(this) is MainWindow window)
+            {
+                window.ShowToast(snapshot.UpdatedBlocks > 0
+                    ? Loc.F("service.hosts_refresh_updated", snapshot.UpdatedBlocks)
+                    : snapshot.FromNetwork
+                        ? Loc.T("service.hosts_refresh_ok")
+                        : Loc.T("service.hosts_refresh_offline"));
+            }
+            var hidden = new List<UIElement>();
+            for (var i = 0; i < lists.Count; i++)
+            {
+                var row = HostToggleRow(lists[i]);
+                if (i >= 5)
+                {
+                    row.Visibility = Visibility.Collapsed;
+                    hidden.Add(row);
+                }
+
+                panel.Children.Add(row);
+            }
+
+            if (hidden.Count == 0)
+                return;
+
+            var more = new Button
+            {
+                Content = Loc.F("service.hosts_show_all", hidden.Count),
+                Style = (Style)Application.Current.FindResource("SecondaryButton"),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 12, 0, 0)
+            };
+            more.Click += (_, _) =>
+            {
+                var open = hidden[0].Visibility != Visibility.Visible;
+                foreach (var item in hidden)
+                    item.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
+                more.Content = open
+                    ? Loc.T("service.hosts_hide")
+                    : Loc.F("service.hosts_show_all", hidden.Count);
+            };
+            panel.Children.Add(more);
+        }
+        catch (Exception ex)
+        {
+            if (load != _hostsLoad)
+                return;
+            status.Text = Loc.T("service.hosts_empty") + " " + ex.Message;
+            status.Visibility = Visibility.Visible;
+        }
+        finally
+        {
+            if (load == _hostsLoad)
+                refresh.IsEnabled = true;
+        }
+    }
+
+    private StackPanel HostToggleRow(HostListSection list)
+    {
+        var root = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
+        var row = new DockPanel { LastChildFill = true };
+        var toggle = new ToggleButton
+        {
+            Style = (Style)Application.Current.FindResource("SwitchToggle"),
+            IsChecked = SystemHostsFile.Covers(list.Id, list.Lines),
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(12, 0, 0, 0)
+        };
+        var show = new Button
+        {
+            Content = Loc.T("service.hosts_show_entries"),
+            Style = (Style)Application.Current.FindResource("SecondaryButton"),
+            Padding = new Thickness(10, 4, 10, 4),
+            Margin = new Thickness(8, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        var preview = new TextEditor
+        {
+            Text = string.Join(Environment.NewLine, list.Lines),
+            Height = 220,
+            Margin = new Thickness(0, 6, 0, 0),
+            Visibility = Visibility.Collapsed
+        };
+        HostsSyntaxHighlighting.Apply(preview);
+
+        DockPanel.SetDock(toggle, Dock.Right);
+        DockPanel.SetDock(show, Dock.Right);
+        row.Children.Add(toggle);
+        row.Children.Add(show);
+        row.Children.Add(new TextBlock
+        {
+            Text = list.Title,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        show.Click += (_, _) =>
+        {
+            var open = preview.Visibility != Visibility.Visible;
+            preview.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
+            show.Content = open ? Loc.T("service.hosts_hide_entries") : Loc.T("service.hosts_show_entries");
+        };
+        toggle.Checked += async (_, _) => await ApplyHostToggleAsync(toggle, list, true);
+        toggle.Unchecked += async (_, _) => await ApplyHostToggleAsync(toggle, list, false);
+
+        root.Children.Add(row);
+        root.Children.Add(preview);
+        return root;
+    }
+
+    private static void OpenHostsFolder()
+    {
+        var file = SystemHostsFile.DefaultPath;
+        var folder = Path.GetDirectoryName(file);
+        if (File.Exists(file))
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{file}\"") { UseShellExecute = true });
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(folder))
+            UiHelpers.OpenFolder(folder);
+    }
+
+    private async Task ApplyHostToggleAsync(ToggleButton toggle, HostListSection list, bool enabled)
+    {
+        if (_hostsGuard)
+            return;
+        toggle.IsEnabled = false;
+        try
+        {
+            if (enabled)
+                await Task.Run(() => SystemHostsFile.SetBlock(list.Id, list.Lines));
+            else
+                await Task.Run(() => SystemHostsFile.RemoveEntries(list.Id, list.Lines));
+        }
+        catch (Exception ex)
+        {
+            _hostsGuard = true;
+            toggle.IsChecked = !enabled;
+            _hostsGuard = false;
+            UiHelpers.ShowError(ex.Message);
+        }
+        finally
+        {
+            toggle.IsEnabled = true;
         }
     }
 
@@ -624,7 +887,7 @@ public partial class ServicePage : UserControl
         var dialog = new Microsoft.Win32.SaveFileDialog
         {
             Filter = "Zip (*.zip)|*.zip",
-            FileName = "ZapretUI-user.zip"
+            FileName = "Aeroway-user.zip"
         };
         if (dialog.ShowDialog() != true)
             return;
@@ -671,15 +934,19 @@ public partial class ServicePage : UserControl
         Margin = new Thickness(0, 8, 0, 8)
     };
 
-    private static Border Card() => new()
+    private static Border Card()
     {
-        Background = (Brush)Application.Current.FindResource("PanelOverlayBrush"),
-        BorderBrush = (Brush)Application.Current.FindResource("BorderBrush"),
-        BorderThickness = new Thickness(1),
-        CornerRadius = new CornerRadius(12),
-        Padding = new Thickness(16),
-        Margin = new Thickness(0, 0, 0, 12)
-    };
+        var card = new Border
+        {
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(16),
+            Margin = new Thickness(0, 0, 0, 12)
+        };
+        card.SetResourceReference(Border.BackgroundProperty, "PanelOverlayBrush");
+        card.SetResourceReference(Border.BorderBrushProperty, "BorderBrush");
+        return card;
+    }
 
     private static TextBlock Label(string text) => new() { Text = text, Margin = new Thickness(0, 0, 0, 4) };
 

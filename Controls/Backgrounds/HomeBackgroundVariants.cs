@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
+using ZapretUI.Helpers;
+using ZapretUI.Services;
 
 namespace ZapretUI.Controls.Backgrounds;
 
@@ -278,15 +280,62 @@ public sealed class RippleBackground : AnimatedBackgroundBase
     }
 }
 
+public static class WaveSignal
+{
+    public static bool Running { get; set; }
+    public static bool Quiet { get; set; }
+
+    /// <summary>0 — почти нет трафика, 1 — канал заметно загружен.</summary>
+    public static double Flow
+    {
+        get => BitConverter.Int64BitsToDouble(Volatile.Read(ref _flowBits));
+        set => Interlocked.Exchange(ref _flowBits, BitConverter.DoubleToInt64Bits(value));
+    }
+
+    private static long _flowBits;
+
+    public static DateTime FlashUntilUtc { get; private set; }
+
+    public static bool IsFlashing => DateTime.UtcNow < FlashUntilUtc;
+
+    public static void Flash() => FlashUntilUtc = DateTime.UtcNow.AddSeconds(1.2);
+}
+
 public sealed class WavyBackground : AnimatedBackgroundBase
 {
+    private readonly FlowSample[] _chart = new FlowSample[FlowTrace.Capacity];
+    private double _shownFlow;
+    private double _lastMs;
+
     protected override void RenderFrame(DrawingContext dc, double timeMs)
     {
         if (AreaWidth <= 0 || AreaHeight <= 0) return;
-        var baseFill = new SolidColorBrush(ParseColor("#050b1b"));
+        var baseFill = new SolidColorBrush(ThemeService.Backdrop);
         baseFill.Freeze();
         dc.DrawRectangle(baseFill, null, new Rect(0, 0, AreaWidth, AreaHeight));
-        var t = ScaledTimeSec(timeMs);
+
+        var flashing = WaveSignal.IsFlashing;
+        var moving = WaveSignal.Running && !WaveSignal.Quiet;
+        var animate = Motion.Enabled;
+        var target = moving ? WaveMath.ClampFlow(WaveSignal.Flow) : 0;
+        if (!animate)
+        {
+            _shownFlow = target;
+            _lastMs = timeMs;
+        }
+        else
+        {
+            var dt = _lastMs <= 0 ? 0.016 : Math.Clamp((timeMs - _lastMs) / 1000d, 0.001, 0.05);
+            _lastMs = timeMs;
+            _shownFlow += (target - _shownFlow) * (1 - Math.Exp(-dt * 4));
+        }
+
+        var flow = _shownFlow;
+        var speed = !animate ? 0 : flashing ? 2.4 : moving ? 1.05 : 0.07;
+        var amplitude = flashing ? 96 : moving ? WaveMath.Crest(flow, timeMs, animate) : 3;
+        var alpha = flashing ? (byte)160 : moving ? (byte)34 : (byte)10;
+        var t = timeMs / 1000.0 * speed;
+
         for (var wave = 0; wave < 4; wave++)
         {
             var geometry = new StreamGeometry();
@@ -295,17 +344,33 @@ public sealed class WavyBackground : AnimatedBackgroundBase
                 ctx.BeginFigure(new Point(0, AreaHeight), true, true);
                 for (var x = 0.0; x <= AreaWidth; x += 8)
                 {
-                    var y = AreaHeight * (0.35 + wave * 0.12) +
-                            Math.Sin(x * 0.01 + t * 1.2 + wave) * 30;
+                    var y = AreaHeight * (0.48 + wave * 0.09) +
+                            Math.Sin(x * 0.011 + t * 1.15 + wave * 0.7) * amplitude * (0.55 + wave * 0.18);
                     ctx.LineTo(new Point(x, y), true, false);
                 }
                 ctx.LineTo(new Point(AreaWidth, AreaHeight), true, false);
             }
             geometry.Freeze();
-            var brush = new SolidColorBrush(Color.FromArgb(26, 224, 178, 64));
+            var color = flashing
+                ? Color.FromArgb(alpha, 255, 214, 90)
+                : Color.FromArgb(alpha, 224, 178, 64);
+            var brush = new SolidColorBrush(color);
             brush.Freeze();
             dc.DrawGeometry(brush, null, geometry);
         }
+
+        var count = FlowTrace.Copy(_chart, out var now);
+        var dpi = 1d;
+        try
+        {
+            dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        }
+        catch
+        {
+            /* элемент ещё не на экране */
+        }
+
+        RateChart.Draw(dc, AreaWidth, AreaHeight, dpi, _chart.AsSpan(0, count), now, flashing, RateChart.MenuInset);
     }
 }
 

@@ -127,8 +127,8 @@ public sealed class AppSelfUpdateService
             }
 
             var sourceDir = FindProgramRoot(extractDir);
-            if (sourceDir is null || !File.Exists(Path.Combine(sourceDir, "ZapretUI.exe")))
-                return AppUpdatePrepareResult.Fail("В пакете нет ZapretUI.exe");
+            if (sourceDir is null || !HasProgramExe(sourceDir))
+                return AppUpdatePrepareResult.Fail("В пакете нет Aeroway.exe");
 
             return AppUpdatePrepareResult.Ok(new PreparedAppUpdate
             {
@@ -420,16 +420,20 @@ public sealed class AppSelfUpdateService
 
     private static string? FindProgramRoot(string extractDir)
     {
-        if (File.Exists(Path.Combine(extractDir, "ZapretUI.exe")))
+        if (HasProgramExe(extractDir))
             return extractDir;
 
         foreach (var dir in Directory.GetDirectories(extractDir))
         {
-            if (File.Exists(Path.Combine(dir, "ZapretUI.exe")))
+            if (HasProgramExe(dir))
                 return dir;
         }
         return null;
     }
+
+    private static bool HasProgramExe(string directory) =>
+        File.Exists(Path.Combine(directory, "Aeroway.exe"))
+        || File.Exists(Path.Combine(directory, "ZapretUI.exe"));
 
     public static string GetInstallConfirmMessage(string remoteVersion)
     {

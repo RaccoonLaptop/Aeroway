@@ -36,7 +36,7 @@ dotnet publish -c Release -r win-x64 --self-contained true `
 if ($LASTEXITCODE -ne 0) { Pop-Location; exit 1 }
 Pop-Location
 
-Copy-Item -LiteralPath (Join-Path $StagingDir "ZapretUI.exe") -Destination (Join-Path $StagingDir "Aeroway.exe") -Force
+Copy-Item -LiteralPath (Join-Path $StagingDir "Aeroway.exe") -Destination (Join-Path $StagingDir "ZapretUI.exe") -Force
 
 $bundledZapret = Join-Path $Packaging "zapret"
 $stagingZapret = Join-Path $StagingDir "zapret"

@@ -8,9 +8,10 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <AssemblyName>ZapretUI</AssemblyName>
+    <AssemblyName>Aeroway</AssemblyName>
+    <AssemblyTitle>Aeroway</AssemblyTitle>
     <RootNamespace>ZapretUI</RootNamespace>
-    <Version>2.1.2</Version>
+    <Version>2.1.3</Version>
     <Authors>Niko</Authors>
     <Company>Niko</Company>
     <Product>Aeroway</Product>
@@ -21,7 +22,8 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <AssemblyName>ZapretUI-Dev</AssemblyName>
+    <AssemblyName>Aeroway-Dev</AssemblyName>
+    <AssemblyTitle>Aeroway</AssemblyTitle>
   </PropertyGroup>
 
   <ItemGroup>

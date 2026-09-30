@@ -35,4 +35,4 @@ Set-Content -Path (Join-Path $UpdateDir "update.json") -Value $manifest -Encodin
 
 Write-Host "Done: $OutDir" -ForegroundColor Green
 Write-Host "Update package: $UpdateDir\$ZipName" -ForegroundColor Green
-Write-Host "Run: ZapretUI.exe" -ForegroundColor Yellow
+Write-Host "Run: Aeroway.exe" -ForegroundColor Yellow

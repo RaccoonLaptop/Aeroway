@@ -146,7 +146,7 @@ try {
     }
 
     $required = @(
-        (Join-Path $TargetDir "ZapretUI.exe"),
+        (Join-Path $TargetDir "Aeroway.exe"),
         (Join-Path $TargetDir "Assets\BatchZapret.xshd")
     )
     foreach ($f in $required) {

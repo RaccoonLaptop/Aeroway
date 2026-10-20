@@ -167,13 +167,16 @@ public sealed class TestRunTracker
                 else if (label.Replace(" ", "", StringComparison.Ordinal).Contains("1.3", StringComparison.Ordinal))
                     dpiRow.Tls13 = token;
                 Notify();
-                TryFinalizeIfTargetsComplete();
+                UpdateLiveDpiScore();
                 return;
             }
         }
 
         if (TestRunParser.TryParseScoreRow(plain, out var score))
         {
+            if (TestKind == PresetTestKind.DpiFreeze && HasTargetBreakdown(score.FileName))
+                return;
+
             UpsertScore(score);
             return;
         }
@@ -257,6 +260,29 @@ public sealed class TestRunTracker
         }
         if (target.Ping is not "…")
             existing.Ping = target.Ping;
+    }
+
+    private void UpdateLiveDpiScore()
+    {
+        if (TestKind != PresetTestKind.DpiFreeze || string.IsNullOrEmpty(CurrentPreset) || Targets.Count == 0)
+            return;
+
+        var clones = CloneTargets(TestTargetRowFormatter.DedupeByKey(Targets));
+        UpsertScore(PresetScoreCalculator.FromDpiTargets(CurrentPreset, clones));
+    }
+
+    private bool HasTargetBreakdown(string fileName)
+    {
+        var normalized = NormalizeBat(fileName);
+        foreach (var score in Scores)
+        {
+            if (!score.FileName.Equals(normalized, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            return score.Detail.Contains('\n') || score.Detail.Contains('\r');
+        }
+
+        return false;
     }
 
     private void TryFinalizeIfTargetsComplete()

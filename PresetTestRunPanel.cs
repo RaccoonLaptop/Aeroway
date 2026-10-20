@@ -321,6 +321,7 @@ public sealed class PresetTestRunPanel : UserControl
         _scoresScroll = new ScrollViewer
         {
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalAlignment = VerticalAlignment.Stretch,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             ClipToBounds = true,
@@ -561,7 +562,9 @@ public sealed class PresetTestRunPanel : UserControl
             Foreground = (Brush)Application.Current.FindResource("TextMutedBrush"),
             FontSize = 11,
             Margin = new Thickness(24, 0, 0, 0),
-            TextWrapping = TextWrapping.Wrap
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            TextWrapping = TextWrapping.Wrap,
+            TextTrimming = TextTrimming.None
         });
         card.Child = stack;
         return card;

@@ -71,10 +71,13 @@ public static class TestRunParser
         var id = m.Groups["id"].Value.Trim();
         var provider = m.Groups["provider"].Value.Trim();
 
-        if (!string.IsNullOrEmpty(provider))
-            targetName = string.IsNullOrEmpty(country) ? $"{id} ({provider})" : $"[{country}] {provider}";
+        // Id distinguishes several hosts of the same provider (US.CF-01 and US.CF-02).
+        if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(provider))
+            targetName = string.IsNullOrEmpty(country) ? $"{id} ({provider})" : $"[{country}] {provider} {id}";
+        else if (!string.IsNullOrEmpty(provider))
+            targetName = string.IsNullOrEmpty(country) ? provider : $"[{country}] {provider}";
         else if (!string.IsNullOrEmpty(country))
-            targetName = $"[{country}] {id}";
+            targetName = string.IsNullOrEmpty(id) ? $"[{country}]" : $"[{country}] {id}";
         else
             targetName = id;
 

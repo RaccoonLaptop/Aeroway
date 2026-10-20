@@ -339,7 +339,10 @@ switch ($Action) {
         if (-not $sys) { Write-Color "[X] WinDivert64.sys file NOT found." Red }
         else { Write-Color "[OK] WinDivert driver present" Green }
 
-        $vpnServices = Get-Service | Where-Object { $_.Name -like "*VPN*" -or $_.DisplayName -like "*VPN*" }
+        $vpnServices = @(Get-Service | Where-Object {
+            $_.Name -like "*VPN*" -or $_.DisplayName -like "*VPN*" -or
+            $_.Name -like "*HappService*" -or $_.DisplayName -like "*HappService*"
+        })
         if ($vpnServices) {
             $names = ($vpnServices | ForEach-Object { $_.DisplayName }) -join ', '
             Write-Color "[?] VPN services found: $names. Some VPNs can conflict with zapret" Yellow

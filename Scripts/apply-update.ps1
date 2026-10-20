@@ -80,7 +80,13 @@ function Start-ZapretUi {
     if (-not (Test-Path -LiteralPath $launch)) { return }
     Write-Log "Запуск Aeroway..."
     Write-Log "Starting: $launch"
-    Start-Process -FilePath $launch -WorkingDirectory $TargetDir
+    $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    if ($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        Start-Process -FilePath $launch -WorkingDirectory $TargetDir
+        return
+    }
+
+    Start-Process -FilePath $launch -WorkingDirectory $TargetDir -Verb RunAs
 }
 
 . (Join-Path $PSScriptRoot 'stop-bypass.ps1')

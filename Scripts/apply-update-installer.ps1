@@ -58,7 +58,22 @@ function Start-ZapretUi {
     if (-not (Test-Path -LiteralPath $launch)) { return }
     Write-Log "Starting Aeroway..."
     Write-Log "Starting: $launch"
-    Start-Process -FilePath $launch -WorkingDirectory $TargetDir
+    Start-AerowayElevated -Path $launch -WorkDir $TargetDir
+}
+
+function Start-AerowayElevated {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$WorkDir
+    )
+
+    $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    if ($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        Start-Process -FilePath $Path -WorkingDirectory $WorkDir
+        return
+    }
+
+    Start-Process -FilePath $Path -WorkingDirectory $WorkDir -Verb RunAs
 }
 
 . (Join-Path $PSScriptRoot 'stop-bypass.ps1')

@@ -6,6 +6,7 @@ namespace ZapretUI.Services;
 
 public sealed class EmbeddedTerminalHost : IAsyncDisposable
 {
+    private readonly Decoder _utf8 = Encoding.UTF8.GetDecoder();
     private IPtyConnection? _connection;
     private CancellationTokenSource? _readCts;
     private Task? _readTask;
@@ -19,6 +20,7 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
     public async Task StartPowerShellScriptAsync(string scriptPath, string workingDirectory, CancellationToken ct = default)
     {
         await StopAsync();
+        _utf8.Reset();
 
         var ps = ResolvePowerShellExecutable();
         _connection = await SpawnWithFallbackAsync(ps, scriptPath, workingDirectory, ct);
@@ -94,7 +96,7 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
 
             if (read <= 0) break;
 
-            var chunk = Encoding.UTF8.GetString(buffer, 0, read);
+            var chunk = DecodeUtf8(buffer, read);
             if (!string.IsNullOrEmpty(chunk))
             {
                 try
@@ -165,7 +167,7 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
         {
             Name = "ZapretTest",
             Cols = cols,
-            Rows = 40,
+            Rows = 300,
             Cwd = workingDirectory,
             App = ps,
             CommandLine =
@@ -178,4 +180,12 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
         };
 
     public async ValueTask DisposeAsync() => await StopAsync();
+
+    private string DecodeUtf8(byte[] buffer, int read)
+    {
+        var maxChars = Encoding.UTF8.GetMaxCharCount(read);
+        var chars = new char[maxChars];
+        var count = _utf8.GetChars(buffer, 0, read, chars, 0, flush: false);
+        return count == 0 ? "" : new string(chars, 0, count);
+    }
 }

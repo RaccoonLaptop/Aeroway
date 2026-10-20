@@ -55,6 +55,10 @@ public static class PresetScoreCalculator
         }
 
         var totalFail = fail + blocked;
+        var summary = $"OK: {ok}, FAIL: {fail}, BLOCKED: {blocked}, UNSUP: {unsup}";
+        var detail = targets.Count <= 1
+            ? summary
+            : summary + Environment.NewLine + string.Join(Environment.NewLine, targets.Select(DescribeDpiRow));
         return BuildScore(
             fileName,
             ok,
@@ -62,7 +66,15 @@ public static class PresetScoreCalculator
             fail,
             0,
             unsup,
-            $"OK: {ok}, FAIL: {fail}, BLOCKED: {blocked}, UNSUP: {unsup}");
+            detail);
+    }
+
+    private static string DescribeDpiRow(TestTargetRow row)
+    {
+        static string Part(string token) =>
+            string.IsNullOrWhiteSpace(token) || token is "…" ? "…" : token;
+
+        return $"{row.Name}: {Part(row.Http)} | {Part(row.Tls12)} | {Part(row.Tls13)}";
     }
 
     private static PresetScoreRow BuildScore(

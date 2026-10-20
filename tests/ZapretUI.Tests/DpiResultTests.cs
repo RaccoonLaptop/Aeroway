@@ -45,13 +45,12 @@ public class DpiResultTests
         Assert.Contains(snapshot.Targets, row => row.Name.Contains("US.CF-02", StringComparison.Ordinal));
 
         var score = Assert.Single(tracker.Scores, row => row.FileName.Equals("general (ALT).bat", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains("US.CF-01", score.Detail, StringComparison.Ordinal);
-        Assert.Contains("US.CF-02", score.Detail, StringComparison.Ordinal);
-        Assert.Contains('\n', score.Detail);
+        Assert.Equal("OK: 3, FAIL: 1, BLOCKED: 1, UNSUP: 1", score.Detail);
+        Assert.DoesNotContain("US.CF-01", score.Detail, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Dpi_score_lists_each_target()
+    public void Dpi_score_is_a_summary_without_target_rows()
     {
         var score = PresetScoreCalculator.FromDpiTargets("general (ALT).bat",
         [
@@ -59,10 +58,8 @@ public class DpiResultTests
             Row("US.CF-02", "HTTP:OK", "TLS1.2:OK", "TLS1.3:UNSUP")
         ]);
 
-        var lines = score.Detail.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        Assert.Equal(3, lines.Length);
-        Assert.Contains("US.CF-01", lines[1], StringComparison.Ordinal);
-        Assert.Contains("US.CF-02", lines[2], StringComparison.Ordinal);
+        Assert.Equal("OK: 3, FAIL: 1, BLOCKED: 1, UNSUP: 1", score.Detail);
+        Assert.DoesNotContain('\n', score.Detail);
     }
 
     private static TestTargetRow Row(string name, string http, string tls12, string tls13) =>

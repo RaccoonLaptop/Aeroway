@@ -14,11 +14,11 @@ public static class TestRunParser
         RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     private static readonly Regex DpiTargetHeader = new(
-        @"^===\s*\[(?<country>[^\]]*)\]\[(?<provider>[^\]]*)\]\s*(?<id>.+?)\s*===$",
+        @"===\s*\[(?<country>[^\]]*)\]\[(?<provider>[^\]]*)\]\s*(?<id>.+?)\s*===",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly Regex DpiStatusLine = new(
-        @"\[(?<label>HTTP|TLS\s*1\.2|TLS\s*1\.3)\].*status=(?<status>[A-Za-z_]+)",
+        @"\[(?<label>HTTP|TLS\s*1\.2|TLS\s*1\.3)\][^\[\r\n]*?status=(?<status>[A-Za-z_]+)",
         RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     public static bool TryParseConfigHeader(string line, out int current, out int total, out string fileName)
@@ -88,11 +88,22 @@ public static class TestRunParser
     {
         label = "";
         status = "";
-        var m = DpiStatusLine.Match(line);
-        if (!m.Success) return false;
-        label = m.Groups["label"].Value;
-        status = m.Groups["status"].Value;
-        return true;
+        foreach (var parsed in ParseDpiStatusLines(line))
+        {
+            label = parsed.Label;
+            status = parsed.Status;
+            return true;
+        }
+
+        return false;
+    }
+
+    public static IReadOnlyList<(string Label, string Status)> ParseDpiStatusLines(string line)
+    {
+        var found = new List<(string Label, string Status)>();
+        foreach (Match m in DpiStatusLine.Matches(line))
+            found.Add((m.Groups["label"].Value, m.Groups["status"].Value));
+        return found;
     }
 
     public static bool TryParseScoreRow(string line, out PresetScoreRow row)

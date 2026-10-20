@@ -83,24 +83,8 @@ public sealed class TestRunTracker
     public void Feed(string chunk)
     {
         if (string.IsNullOrEmpty(chunk)) return;
-
-        var plain = StripAnsi(chunk)
-            .Replace("\r\n", "\n")
-            .Replace("\r", "");
-        _lineBuffer.Append(plain);
-
-        while (true)
-        {
-            var text = _lineBuffer.ToString();
-            var nl = text.IndexOf('\n');
-            if (nl < 0)
-                break;
-
-            var line = NormalizePhysicalLine(text[..nl]);
-            _lineBuffer.Clear();
-            _lineBuffer.Append(text[(nl + 1)..]);
-            ProcessLine(line);
-        }
+        _lineBuffer.Append(chunk);
+        DrainLines(flush: false);
     }
 
     private void ProcessLine(string line)
@@ -156,24 +140,33 @@ public sealed class TestRunTracker
                     Ping = "n/a",
                     PingOnly = false
                 });
-                return;
             }
 
             if (_currentDpiTarget is not null
-                && TestRunParser.TryParseDpiStatusLine(plain, out var label, out var status)
                 && _targetIndex.TryGetValue(NormalizeTargetKey(_currentDpiTarget), out var dpiRow))
             {
-                var token = FormatDpiStatusToken(label, status);
-                if (label.Equals("HTTP", StringComparison.OrdinalIgnoreCase))
-                    dpiRow.Http = token;
-                else if (label.Replace(" ", "", StringComparison.Ordinal).Contains("1.2", StringComparison.Ordinal))
-                    dpiRow.Tls12 = token;
-                else if (label.Replace(" ", "", StringComparison.Ordinal).Contains("1.3", StringComparison.Ordinal))
-                    dpiRow.Tls13 = token;
-                Notify();
-                UpdateLiveDpiScore();
-                return;
+                var statuses = TestRunParser.ParseDpiStatusLines(plain);
+                if (statuses.Count > 0)
+                {
+                    foreach (var (label, status) in statuses)
+                    {
+                        var token = FormatDpiStatusToken(label, status);
+                        if (label.Equals("HTTP", StringComparison.OrdinalIgnoreCase))
+                            dpiRow.Http = token;
+                        else if (label.Replace(" ", "", StringComparison.Ordinal).Contains("1.2", StringComparison.Ordinal))
+                            dpiRow.Tls12 = token;
+                        else if (label.Replace(" ", "", StringComparison.Ordinal).Contains("1.3", StringComparison.Ordinal))
+                            dpiRow.Tls13 = token;
+                    }
+
+                    Notify();
+                    UpdateLiveDpiScore();
+                    return;
+                }
             }
+
+            if (_currentDpiTarget is not null && plain.Contains("===", StringComparison.Ordinal))
+                return;
         }
 
         if (TestRunParser.TryParseScoreRow(plain, out var score))
@@ -458,11 +451,59 @@ public sealed class TestRunTracker
             Scores.Add(s);
     }
 
-    private void FlushBuffer()
+    private void FlushBuffer() => DrainLines(flush: true);
+
+    private void DrainLines(bool flush)
     {
-        if (_lineBuffer.Length == 0) return;
-        ProcessLine(NormalizePhysicalLine(_lineBuffer.ToString()));
-        _lineBuffer.Clear();
+        while (true)
+        {
+            var text = _lineBuffer.ToString();
+            var breakAt = IndexOfLineBreak(text, out var breakLen, holdTrailingCr: !flush);
+            if (breakAt < 0)
+            {
+                if (flush && text.Length > 0)
+                {
+                    ProcessLine(NormalizePhysicalLine(StripAnsi(text)));
+                    _lineBuffer.Clear();
+                }
+
+                return;
+            }
+
+            var line = NormalizePhysicalLine(StripAnsi(text[..breakAt]));
+            _lineBuffer.Clear();
+            _lineBuffer.Append(text[(breakAt + breakLen)..]);
+            ProcessLine(line);
+        }
+    }
+
+    private static int IndexOfLineBreak(string text, out int breakLen, bool holdTrailingCr)
+    {
+        breakLen = 0;
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] == '\n')
+            {
+                breakLen = 1;
+                return i;
+            }
+
+            if (text[i] != '\r')
+                continue;
+
+            if (i + 1 >= text.Length)
+            {
+                if (holdTrailingCr)
+                    return -1;
+                breakLen = 1;
+                return i;
+            }
+
+            breakLen = text[i + 1] == '\n' ? 2 : 1;
+            return i;
+        }
+
+        return -1;
     }
 
     private static string NormalizePhysicalLine(string line) => line.Trim();

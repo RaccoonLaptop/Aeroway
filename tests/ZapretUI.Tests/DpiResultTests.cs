@@ -62,6 +62,40 @@ public class DpiResultTests
         Assert.DoesNotContain('\n', score.Detail);
     }
 
+    [Fact]
+    public void Repeated_config_header_does_not_drop_the_rest_of_the_targets()
+    {
+        var tracker = new TestRunTracker();
+        tracker.BeginRun(PresetTestKind.DpiFreeze);
+
+        tracker.Feed("""
+            [1/2] general (ALT).bat
+            === [US][Cloudflare] US.CF-01 ===
+            [HTTP] code=200 buf_up=1 bytes (0.1 KB) buf_down=1 bytes (0.1 KB) time=0.2s status=OK
+            [TLS1.2] code=200 buf_up=1 bytes (0.1 KB) buf_down=1 bytes (0.1 KB) time=0.2s status=OK
+            [TLS1.3] code=200 buf_up=1 bytes (0.1 KB) buf_down=1 bytes (0.1 KB) time=0.2s status=OK
+            [1/2] general (ALT).bat
+            === [US][Cloudflare] US.CF-02 ===
+            [HTTP] code=200 buf_up=1 bytes (0.1 KB) buf_down=1 bytes (0.1 KB) time=0.2s status=OK
+            [TLS1.2] code=200 buf_up=1 bytes (0.1 KB) buf_down=1 bytes (0.1 KB) time=0.2s status=FAIL
+            [TLS1.3] code=000 buf_up=0 bytes (0 KB) buf_down=0 bytes (0 KB) time=0.1s status=UNSUPPORTED
+            [2/2] Niko_ALT11.bat
+            === [DE][Hetzner] DE.HE-01 ===
+            [HTTP] code=200 buf_up=1 bytes (0.1 KB) buf_down=1 bytes (0.1 KB) time=0.2s status=OK
+            [TLS1.2] code=200 buf_up=1 bytes (0.1 KB) buf_down=1 bytes (0.1 KB) time=0.2s status=OK
+            [TLS1.3] code=200 buf_up=1 bytes (0.1 KB) buf_down=1 bytes (0.1 KB) time=0.2s status=OK
+            """ + "\n");
+        tracker.EndRun(0);
+
+        Assert.True(tracker.TryGetSnapshot("general (ALT).bat", out var first));
+        Assert.Equal(2, first.Targets.Count);
+        Assert.Contains(first.Targets, row => row.Name.Contains("US.CF-01", StringComparison.Ordinal));
+        Assert.Contains(first.Targets, row => row.Name.Contains("US.CF-02", StringComparison.Ordinal));
+
+        Assert.True(tracker.TryGetSnapshot("Niko_ALT11.bat", out var second));
+        Assert.Single(second.Targets);
+    }
+
     private static TestTargetRow Row(string name, string http, string tls12, string tls13) =>
         new()
         {

@@ -110,8 +110,12 @@ public sealed class TestRunTracker
 
         if (TestRunParser.TryParseConfigHeader(plain, out var cur, out var tot, out var fileName))
         {
+            var nextPreset = NormalizeBat(fileName);
+            if (nextPreset.Equals(CurrentPreset, StringComparison.OrdinalIgnoreCase))
+                return;
+
             FinalizeCurrentPresetIfNeeded();
-            CurrentPreset = NormalizeBat(fileName);
+            CurrentPreset = nextPreset;
             CurrentPresetDisplay = StrategyDisplayHelper.ToDisplayName(CurrentPreset);
             _currentDpiTarget = null;
             if (TestKind == PresetTestKind.Standard && _targetTemplate.Count > 0)
@@ -296,7 +300,7 @@ public sealed class TestRunTracker
 
     private void FinalizeCurrentPresetIfNeeded()
     {
-        if (string.IsNullOrEmpty(CurrentPreset) || _finalizedPresets.Contains(CurrentPreset))
+        if (string.IsNullOrEmpty(CurrentPreset))
             return;
         if (Targets.Count == 0)
             return;
@@ -305,24 +309,27 @@ public sealed class TestRunTracker
 
     private void FinalizeCurrentPreset()
     {
-        if (string.IsNullOrEmpty(CurrentPreset) || _finalizedPresets.Contains(CurrentPreset))
+        if (string.IsNullOrEmpty(CurrentPreset))
             return;
 
-        var clones = CloneTargets(TestTargetRowFormatter.DedupeByKey(Targets));
-        if (clones.Count == 0)
+        var incoming = CloneTargets(TestTargetRowFormatter.DedupeByKey(Targets));
+        if (incoming.Count == 0)
             return;
+
+        if (_snapshots.TryGetValue(CurrentPreset, out var existing))
+            incoming = MergeTargetRows(existing.Targets, incoming);
 
         _snapshots[CurrentPreset] = new PresetTargetSnapshot
         {
             FileName = CurrentPreset,
             DisplayName = CurrentPresetDisplay,
-            Targets = clones
+            Targets = incoming
         };
         _finalizedPresets.Add(CurrentPreset);
 
         var score = TestKind == PresetTestKind.DpiFreeze
-            ? PresetScoreCalculator.FromDpiTargets(CurrentPreset, clones)
-            : PresetScoreCalculator.FromStandardTargets(CurrentPreset, clones);
+            ? PresetScoreCalculator.FromDpiTargets(CurrentPreset, incoming)
+            : PresetScoreCalculator.FromStandardTargets(CurrentPreset, incoming);
         UpsertScore(score);
     }
 
@@ -348,6 +355,32 @@ public sealed class TestRunTracker
         }
 
         return true;
+    }
+
+    private static List<TestTargetRow> MergeTargetRows(
+        IReadOnlyList<TestTargetRow> existing,
+        IReadOnlyList<TestTargetRow> incoming)
+    {
+        var map = new Dictionary<string, TestTargetRow>(StringComparer.OrdinalIgnoreCase);
+        var order = new List<string>();
+        foreach (var row in existing)
+        {
+            var key = NormalizeTargetKey(row.Name);
+            if (map.ContainsKey(key))
+                continue;
+            map[key] = row;
+            order.Add(key);
+        }
+
+        foreach (var row in incoming)
+        {
+            var key = NormalizeTargetKey(row.Name);
+            if (!map.ContainsKey(key))
+                order.Add(key);
+            map[key] = row;
+        }
+
+        return order.Select(key => map[key]).ToList();
     }
 
     private static List<TestTargetRow> CloneTargets(IEnumerable<TestTargetRow> rows) =>

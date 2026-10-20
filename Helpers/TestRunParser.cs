@@ -6,7 +6,7 @@ namespace ZapretUI.Helpers;
 public static class TestRunParser
 {
     private static readonly Regex ConfigHeader = new(
-        @"\[\s*(?<cur>\d+)\s*/\s*(?<tot>\d+)\s*\]\s*(?<name>.+?)\s*$",
+        @"^\s*\[\s*(?<cur>\d+)\s*/\s*(?<tot>\d+)\s*\]\s*(?<name>.+?\.bat)\s*$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly Regex BestConfig = new(

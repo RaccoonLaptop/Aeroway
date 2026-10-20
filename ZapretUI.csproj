@@ -11,7 +11,7 @@
     <AssemblyName>Aeroway</AssemblyName>
     <AssemblyTitle>Aeroway</AssemblyTitle>
     <RootNamespace>ZapretUI</RootNamespace>
-    <Version>2.1.4</Version>
+    <Version>2.1.5</Version>
     <Authors>Niko</Authors>
     <Company>Niko</Company>
     <Product>Aeroway</Product>
@@ -91,7 +91,6 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.3.0.90" />
-    <PackageReference Include="Porta.Pty" Version="1.0.7" />
     <PackageReference Include="TaskScheduler" Version="2.11.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="9.0.0" />
   </ItemGroup>

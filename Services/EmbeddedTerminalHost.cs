@@ -1,15 +1,15 @@
 using System.IO;
 using System.Text;
-using Porta.Pty;
 
 namespace ZapretUI.Services;
 
 public sealed class EmbeddedTerminalHost : IAsyncDisposable
 {
     private readonly Decoder _utf8 = Encoding.UTF8.GetDecoder();
-    private IPtyConnection? _connection;
+    private ConPtyProcess? _connection;
     private CancellationTokenSource? _readCts;
     private Task? _readTask;
+    private int? _exitCode;
 
     public event Action<string>? OutputReceived;
     public event Action<int>? ProcessExited;
@@ -23,12 +23,9 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
         _utf8.Reset();
 
         var ps = ResolvePowerShellExecutable();
-        _connection = await SpawnWithFallbackAsync(ps, scriptPath, workingDirectory, ct);
-        _connection.ProcessExited += (_, e) =>
-        {
-            ProcessExited?.Invoke(e.ExitCode);
-            _connection = null;
-        };
+        _exitCode = null;
+        _connection = SpawnWithFallback(ps, scriptPath, workingDirectory);
+        _connection.Exited += code => _exitCode = code;
 
         _readCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _readTask = Task.Run(() => ReadLoopAsync(_readCts.Token), _readCts.Token);
@@ -41,21 +38,27 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
             ? "\r"
             : (text.EndsWith('\r') ? text : text + "\r");
         var bytes = Encoding.UTF8.GetBytes(payload);
-        await _connection.WriterStream.WriteAsync(bytes, ct);
-        await _connection.WriterStream.FlushAsync(ct);
+        await _connection.Input.WriteAsync(bytes, ct);
+        await _connection.Input.FlushAsync(ct);
     }
 
     public async Task SendKeyAsync(char key, CancellationToken ct = default)
     {
         if (_connection is null) return;
         var bytes = Encoding.UTF8.GetBytes(key.ToString());
-        await _connection.WriterStream.WriteAsync(bytes, ct);
-        await _connection.WriterStream.FlushAsync(ct);
+        await _connection.Input.WriteAsync(bytes, ct);
+        await _connection.Input.FlushAsync(ct);
     }
 
     public async Task StopAsync()
     {
         _readCts?.Cancel();
+        if (_connection is not null)
+        {
+            try { _connection.Kill(); }
+            catch { /* ignore */ }
+        }
+
         if (_readTask is not null)
         {
             try { await _readTask.ConfigureAwait(false); }
@@ -67,8 +70,6 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
 
         if (_connection is not null)
         {
-            try { _connection.Kill(); }
-            catch { /* ignore */ }
             _connection.Dispose();
             _connection = null;
         }
@@ -82,7 +83,7 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
             int read;
             try
             {
-                read = await _connection.ReaderStream.ReadAsync(buffer, ct);
+                read = await _connection.Output.ReadAsync(buffer, ct);
             }
             catch (OperationCanceledException)
             {
@@ -94,7 +95,14 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
                 break;
             }
 
-            if (read <= 0) break;
+            if (read <= 0)
+            {
+                for (var i = 0; i < 40 && _exitCode is null; i++)
+                    await Task.Delay(50, ct).ConfigureAwait(false);
+                ProcessExited?.Invoke(_exitCode ?? 0);
+                _connection = null;
+                break;
+            }
 
             var chunk = DecodeUtf8(buffer, read);
             if (!string.IsNullOrEmpty(chunk))
@@ -111,20 +119,24 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
         }
     }
 
-    private static async Task<IPtyConnection> SpawnWithFallbackAsync(
-        string ps,
-        string scriptPath,
-        string workingDirectory,
-        CancellationToken ct)
+    private static ConPtyProcess SpawnWithFallback(string ps, string scriptPath, string workingDirectory)
     {
-        var cols = new[] { 300, 260, 200, 120 };
+        short[] cols = [300, 260, 200, 120];
         Exception? last = null;
+        var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(BuildColorInitCommand(scriptPath)));
+        var arguments = new[]
+        {
+            "-NoLogo",
+            "-NoProfile",
+            "-ExecutionPolicy", "Bypass",
+            "-EncodedCommand", encoded
+        };
 
         foreach (var col in cols)
         {
             try
             {
-                return await PtyProvider.SpawnAsync(CreateOptions(ps, scriptPath, workingDirectory, col), ct);
+                return ConPtyProcess.Start(ps, arguments, workingDirectory, col, 300);
             }
             catch (Exception ex)
             {
@@ -161,23 +173,6 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
             "if ($PSVersionTable.PSVersion.Major -ge 7) { $PSStyle.OutputRendering = 'Ansi' }; " +
             $"& '{escapedScript}'";
     }
-
-    private static PtyOptions CreateOptions(string ps, string scriptPath, string workingDirectory, int cols) =>
-        new()
-        {
-            Name = "ZapretTest",
-            Cols = cols,
-            Rows = 300,
-            Cwd = workingDirectory,
-            App = ps,
-            CommandLine =
-            [
-                "-NoLogo",
-                "-NoProfile",
-                "-ExecutionPolicy", "Bypass",
-                "-Command", BuildColorInitCommand(scriptPath)
-            ]
-        };
 
     public async ValueTask DisposeAsync() => await StopAsync();
 

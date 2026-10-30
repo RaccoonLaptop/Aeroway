@@ -27,7 +27,7 @@ public sealed class HostsCatalogService
         ForgetLegacyMalw();
         var flowsealCache = ReadCache("flowseal.hosts");
         var geoCache = ReadCache(GeoHideCache);
-        if (geoCache is not null && HostsAddressRefresher.HasDuplicateHosts(geoCache))
+        if (geoCache is not null && HostsAddressRefresher.IsLegacyList(geoCache))
         {
             try { File.Delete(Path.Combine(CacheDir, GeoHideCache)); }
             catch { /* the bundled list is used instead */ }
@@ -217,7 +217,7 @@ public sealed class HostsCatalogService
     private static string? ReadGeoHide()
     {
         var cache = ReadCache(GeoHideCache);
-        if (cache is not null && !HostsAddressRefresher.HasDuplicateHosts(cache))
+        if (cache is not null && !HostsAddressRefresher.IsLegacyList(cache))
             return cache;
         return ReadBundled(GeoHideCache);
     }

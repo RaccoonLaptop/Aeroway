@@ -15,91 +15,79 @@ public static class HostsAddressRefresher
 {
     private const string Preamble = "\u0001";
     private static readonly HttpClient Doh = new() { Timeout = TimeSpan.FromSeconds(20) };
+    private static readonly HashSet<string> LegacyProxyAddresses = new(StringComparer.Ordinal)
+    {
+        "159.194.200.33",
+        "193.233.112.67",
+        "193.233.112.68",
+        "193.233.112.88"
+    };
 
     public static bool HasDuplicateHosts(string content)
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var host in Hosts(content))
+        foreach (var section in HostsListParser.ParseSections(content, "geohide", Preamble))
         {
-            if (!seen.Add(host))
-                return true;
+            foreach (var line in section.Lines)
+            {
+                if (!seen.Add(line))
+                    return true;
+            }
         }
 
         return false;
     }
 
+    public static bool IsLegacyList(string content) =>
+        content.Contains("один A-адрес", StringComparison.Ordinal)
+        || SameHostUsesSeveralLegacyProxies(content);
+
     public static Task<HostsAddressRefreshResult> RefreshAsync(string content, CancellationToken ct = default) =>
-        RefreshAsync(content, ResolveLowestAAsync, ct);
+        RefreshAsync(content, ResolveAAsync, ct);
 
     public static async Task<HostsAddressRefreshResult> RefreshAsync(
         string content,
-        Func<string, CancellationToken, Task<IPAddress?>> resolve,
+        Func<string, CancellationToken, Task<IReadOnlyList<IPAddress>>> resolve,
         CancellationToken ct = default)
     {
-        var sections = new List<(string Title, List<(string Host, string Fallback)> Rows)>();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var section in HostsListParser.ParseSections(content, "geohide", Preamble))
-        {
-            var rows = new List<(string Host, string Fallback)>();
-            foreach (var line in section.Lines)
-            {
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 2)
-                    continue;
-                for (var i = 1; i < parts.Length; i++)
-                {
-                    if (!seen.Add(parts[i]))
-                        continue;
-                    rows.Add((parts[i], parts[0]));
-                }
-            }
-
-            if (rows.Count > 0)
-                sections.Add((section.Title, rows));
-        }
-
+        var sections = CollectSections(content);
         var (chosen, resolved, kept) = await ResolveRowsAsync(sections.SelectMany(section => section.Rows), resolve, ct).ConfigureAwait(false);
 
         var text = new StringBuilder();
         text.AppendLine("### geohide.ru: hosts file");
-        text.AppendLine("# Обновлено Aeroway: один A-адрес на домен");
+        text.AppendLine("# Обновлено Aeroway: все A-записи на домен");
         foreach (var section in sections)
         {
             text.AppendLine();
             if (section.Title != Preamble)
                 text.Append("# ").AppendLine(section.Title);
             foreach (var row in section.Rows)
-                text.Append(chosen[row.Host]).Append(' ').AppendLine(row.Host);
+            {
+                foreach (var address in chosen[row.Host])
+                    text.Append(address).Append(' ').AppendLine(row.Host);
+            }
         }
 
         return new HostsAddressRefreshResult(text.ToString().TrimEnd() + Environment.NewLine, resolved, kept);
     }
 
     public static Task<HostLinesRefresh> RefreshLinesAsync(IReadOnlyList<string> lines, CancellationToken ct = default) =>
-        RefreshLinesAsync(lines, ResolveLowestAAsync, ct);
+        RefreshLinesAsync(lines, ResolveAAsync, ct);
 
     public static async Task<HostLinesRefresh> RefreshLinesAsync(
         IReadOnlyList<string> lines,
-        Func<string, CancellationToken, Task<IPAddress?>> resolve,
+        Func<string, CancellationToken, Task<IReadOnlyList<IPAddress>>> resolve,
         CancellationToken ct = default)
     {
-        var rows = new List<(string Host, string Fallback)>();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var line in lines)
+        var rows = CollectRows(lines, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+        var (chosen, resolved, kept) = await ResolveRowsAsync(rows, resolve, ct).ConfigureAwait(false);
+        var rewritten = new List<string>();
+        foreach (var row in rows)
         {
-            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length < 2)
-                continue;
-            for (var i = 1; i < parts.Length; i++)
-            {
-                if (!seen.Add(parts[i]))
-                    continue;
-                rows.Add((parts[i], parts[0]));
-            }
+            foreach (var address in chosen[row.Host])
+                rewritten.Add(address + " " + row.Host);
         }
 
-        var (chosen, resolved, kept) = await ResolveRowsAsync(rows, resolve, ct).ConfigureAwait(false);
-        var rewritten = rows.Select(row => chosen[row.Host] + " " + row.Host).ToList();
         return new HostLinesRefresh(rewritten, resolved, kept);
     }
 
@@ -122,12 +110,55 @@ public static class HostsAddressRefresher
         return string.Join('\n', rows).TrimEnd() + "\n";
     }
 
-    private static async Task<(System.Collections.Concurrent.ConcurrentDictionary<string, string> Chosen, int Resolved, int Kept)> ResolveRowsAsync(
-        IEnumerable<(string Host, string Fallback)> rows,
-        Func<string, CancellationToken, Task<IPAddress?>> resolve,
+    private static List<(string Title, List<(string Host, IReadOnlyList<string> Fallback)> Rows)> CollectSections(string content)
+    {
+        var sections = new List<(string Title, List<(string Host, IReadOnlyList<string> Fallback)> Rows)>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var section in HostsListParser.ParseSections(content, "geohide", Preamble))
+        {
+            var rows = CollectRows(section.Lines, seen);
+            if (rows.Count > 0)
+                sections.Add((section.Title, rows));
+        }
+
+        return sections;
+    }
+
+    private static List<(string Host, IReadOnlyList<string> Fallback)> CollectRows(IReadOnlyList<string> lines, HashSet<string> seen)
+    {
+        var order = new List<string>();
+        var fallbacks = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in lines)
+        {
+            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2)
+                continue;
+            for (var i = 1; i < parts.Length; i++)
+            {
+                var host = parts[i];
+                if (fallbacks.TryGetValue(host, out var addresses))
+                {
+                    if (!addresses.Contains(parts[0], StringComparer.Ordinal))
+                        addresses.Add(parts[0]);
+                    continue;
+                }
+
+                if (!seen.Add(host))
+                    continue;
+                fallbacks[host] = [parts[0]];
+                order.Add(host);
+            }
+        }
+
+        return order.Select(host => (host, (IReadOnlyList<string>)fallbacks[host])).ToList();
+    }
+
+    private static async Task<(System.Collections.Concurrent.ConcurrentDictionary<string, string[]> Chosen, int Resolved, int Kept)> ResolveRowsAsync(
+        IEnumerable<(string Host, IReadOnlyList<string> Fallback)> rows,
+        Func<string, CancellationToken, Task<IReadOnlyList<IPAddress>>> resolve,
         CancellationToken ct)
     {
-        var chosen = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var chosen = new System.Collections.Concurrent.ConcurrentDictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
         var resolved = 0;
         var kept = 0;
         using var gate = new SemaphoreSlim(12);
@@ -139,15 +170,15 @@ public static class HostsAddressRefresher
                 await gate.WaitAsync(ct).ConfigureAwait(false);
                 try
                 {
-                    var address = await resolve(row.Host, ct).ConfigureAwait(false);
-                    if (address is null)
+                    var addresses = await resolve(row.Host, ct).ConfigureAwait(false);
+                    if (addresses.Count == 0)
                     {
-                        chosen[row.Host] = row.Fallback;
+                        chosen[row.Host] = SortAddresses(row.Fallback.Select(IPAddress.Parse));
                         Interlocked.Increment(ref kept);
                     }
                     else
                     {
-                        chosen[row.Host] = address.ToString();
+                        chosen[row.Host] = SortAddresses(addresses);
                         Interlocked.Increment(ref resolved);
                     }
                 }
@@ -160,6 +191,29 @@ public static class HostsAddressRefresher
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
         return (chosen, resolved, kept);
+    }
+
+    private static bool SameHostUsesSeveralLegacyProxies(string content)
+    {
+        var hits = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var section in HostsListParser.ParseSections(content, "geohide", Preamble))
+        {
+            foreach (var line in section.Lines)
+            {
+                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length < 2 || !LegacyProxyAddresses.Contains(parts[0]))
+                    continue;
+                for (var i = 1; i < parts.Length; i++)
+                {
+                    hits.TryGetValue(parts[i], out var count);
+                    if (count + 1 > 1)
+                        return true;
+                    hits[parts[i]] = count + 1;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static string KeepExtraHosts(string refreshed, string previous)
@@ -204,20 +258,20 @@ public static class HostsAddressRefresher
         return string.Join('\n', lines).TrimEnd() + "\n";
     }
 
-    public static async Task<IPAddress?> ResolveLowestAAsync(string host, CancellationToken ct)
+    public static async Task<IReadOnlyList<IPAddress>> ResolveAAsync(string host, CancellationToken ct)
     {
         var ascii = ToAscii(host);
         if (ascii.Length == 0)
-            return null;
+            return [];
 
         var cloudflare = await QueryDohAsync("https://cloudflare-dns.com/dns-query", ascii, ct).ConfigureAwait(false);
         if (cloudflare.Definitive)
-            return cloudflare.Address;
+            return cloudflare.Addresses;
         var google = await QueryDohAsync("https://dns.google/resolve", ascii, ct).ConfigureAwait(false);
-        return google.Address;
+        return google.Addresses;
     }
 
-    private static async Task<(IPAddress? Address, bool Definitive)> QueryDohAsync(string endpoint, string host, CancellationToken ct)
+    private static async Task<(IReadOnlyList<IPAddress> Addresses, bool Definitive)> QueryDohAsync(string endpoint, string host, CancellationToken ct)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromSeconds(8));
@@ -229,18 +283,18 @@ public static class HostsAddressRefresher
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/dns-json"));
             using var response = await Doh.SendAsync(request, timeout.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
-                return (null, false);
+                return ([], false);
             await using var stream = await response.Content.ReadAsStreamAsync(timeout.Token).ConfigureAwait(false);
             using var document = await JsonDocument.ParseAsync(stream, cancellationToken: timeout.Token).ConfigureAwait(false);
             if (!document.RootElement.TryGetProperty("Status", out var status))
-                return (null, false);
+                return ([], false);
             var code = status.GetInt32();
             if (code == 3)
-                return (null, true);
+                return ([], true);
             if (code != 0)
-                return (null, false);
+                return ([], false);
 
-            IPAddress? best = null;
+            var found = new List<IPAddress>();
             if (document.RootElement.TryGetProperty("Answer", out var answers))
             {
                 foreach (var answer in answers.EnumerateArray())
@@ -251,12 +305,12 @@ public static class HostsAddressRefresher
                         continue;
                     if (!IPAddress.TryParse(data.GetString(), out var address) || address.AddressFamily != AddressFamily.InterNetwork)
                         continue;
-                    if (best is null || Compare(address, best) < 0)
-                        best = address;
+                    if (!found.Contains(address))
+                        found.Add(address);
                 }
             }
 
-            return (best, true);
+            return (found, true);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -264,7 +318,32 @@ public static class HostsAddressRefresher
         }
         catch (Exception)
         {
-            return (null, false);
+            return ([], false);
+        }
+    }
+
+    private static string[] SortAddresses(IEnumerable<IPAddress> addresses) =>
+        addresses.Distinct().OrderBy(address => address, IpOrder.Instance).Select(address => address.ToString()).ToArray();
+
+    private sealed class IpOrder : IComparer<IPAddress>
+    {
+        public static readonly IpOrder Instance = new();
+
+        public int Compare(IPAddress? left, IPAddress? right)
+        {
+            if (left is null || right is null)
+                return 0;
+            var a = left.GetAddressBytes();
+            var b = right.GetAddressBytes();
+            var length = Math.Min(a.Length, b.Length);
+            for (var i = 0; i < length; i++)
+            {
+                var order = a[i].CompareTo(b[i]);
+                if (order != 0)
+                    return order;
+            }
+
+            return a.Length.CompareTo(b.Length);
         }
     }
 
@@ -293,18 +372,4 @@ public static class HostsAddressRefresher
         }
     }
 
-    private static int Compare(IPAddress left, IPAddress right)
-    {
-        var a = left.GetAddressBytes();
-        var b = right.GetAddressBytes();
-        var length = Math.Min(a.Length, b.Length);
-        for (var i = 0; i < length; i++)
-        {
-            var order = a[i].CompareTo(b[i]);
-            if (order != 0)
-                return order;
-        }
-
-        return a.Length.CompareTo(b.Length);
-    }
 }

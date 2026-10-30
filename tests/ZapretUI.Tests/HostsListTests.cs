@@ -86,25 +86,14 @@ public class HostsListTests
         Assert.Contains(sections, section => section.Lines.Any(line => line.Contains("chatgpt.com", StringComparison.OrdinalIgnoreCase)));
         Assert.False(HostsAddressRefresher.HasDuplicateHosts(File.ReadAllText(path)));
         var grok = Assert.Single(sections, section => section.Title == "Grok AI");
-        Assert.Equal(
-            [
-                "104.18.18.80 accounts.x.ai",
-                "104.18.18.80 api.x.ai",
-                "104.18.28.234 assets.grok.com",
-                "104.18.18.80 assets.x.ai",
-                "104.18.28.234 grok.com",
-                "104.18.28.234 www.grok.com",
-                "172.66.0.227 grok.x.com",
-                "172.66.0.227 wr.x.com",
-                "104.18.18.80 grok.x.ai",
-                "104.18.18.80 x.ai",
-                "104.18.18.80 www.x.ai"
-            ],
-            grok.Lines);
+        Assert.Contains("104.18.28.234 grok.com", grok.Lines);
+        Assert.Contains("104.18.29.234 grok.com", grok.Lines);
+        Assert.Contains("104.18.18.80 x.ai", grok.Lines);
+        Assert.Contains("104.18.19.80 x.ai", grok.Lines);
     }
 
     [Fact]
-    public async Task Refresh_keeps_one_address_and_the_first_ip_when_dns_fails()
+    public async Task Refresh_writes_every_address_and_keeps_previous_when_dns_fails()
     {
         const string content = """
             # OpenAI
@@ -117,12 +106,15 @@ public class HostsListTests
             """;
 
         var result = await HostsAddressRefresher.RefreshAsync(content, (host, _) =>
-            Task.FromResult(host == "grok.com" ? IPAddress.Parse("104.18.28.234") : null));
+            Task.FromResult<IReadOnlyList<IPAddress>>(host == "grok.com"
+                ? [IPAddress.Parse("104.18.29.234"), IPAddress.Parse("104.18.28.234")]
+                : []));
 
         Assert.Contains("1.1.1.1 chatgpt.com", result.Content, StringComparison.Ordinal);
-        Assert.DoesNotContain("2.2.2.2", result.Content, StringComparison.Ordinal);
+        Assert.Contains("2.2.2.2 chatgpt.com", result.Content, StringComparison.Ordinal);
         Assert.DoesNotContain("9.9.9.9", result.Content, StringComparison.Ordinal);
         Assert.Contains("104.18.28.234 grok.com", result.Content, StringComparison.Ordinal);
+        Assert.Contains("104.18.29.234 grok.com", result.Content, StringComparison.Ordinal);
         Assert.Contains("3.3.3.3 api.openai.com", result.Content, StringComparison.Ordinal);
         Assert.Equal(1, result.Resolved);
         Assert.Equal(2, result.Kept);
@@ -152,9 +144,11 @@ public class HostsListTests
     {
         var refresh = await HostsAddressRefresher.RefreshLinesAsync(
             ["1.1.1.1 grok.com", "2.2.2.2 grok.com", "9.9.9.9 x.ai"],
-            (host, _) => Task.FromResult<IPAddress?>(host == "grok.com" ? IPAddress.Parse("104.18.28.234") : null));
+            (host, _) => Task.FromResult<IReadOnlyList<IPAddress>>(host == "grok.com"
+                ? [IPAddress.Parse("104.18.29.234"), IPAddress.Parse("104.18.28.234")]
+                : []));
 
-        Assert.Equal(["104.18.28.234 grok.com", "9.9.9.9 x.ai"], refresh.Lines);
+        Assert.Equal(["104.18.28.234 grok.com", "104.18.29.234 grok.com", "9.9.9.9 x.ai"], refresh.Lines);
         Assert.Equal(1, refresh.Resolved);
         Assert.Equal(1, refresh.Kept);
 
@@ -166,12 +160,13 @@ public class HostsListTests
             8.8.8.8 grok.com
             8.8.4.4 grok.com
             """;
-        var updated = HostsAddressRefresher.ReplaceNamedSection(content, "Grok AI", refresh.Lines.Take(1).ToArray());
+        var updated = HostsAddressRefresher.ReplaceNamedSection(content, "Grok AI", refresh.Lines.Take(2).ToArray());
         Assert.Contains("1.1.1.1 chatgpt.com", updated, StringComparison.Ordinal);
         Assert.Contains("104.18.28.234 grok.com", updated, StringComparison.Ordinal);
+        Assert.Contains("104.18.29.234 grok.com", updated, StringComparison.Ordinal);
         Assert.DoesNotContain("8.8.8.8", updated, StringComparison.Ordinal);
         var grok = Assert.Single(HostsListParser.ParseSections(updated, "geohide"), section => section.Title == "Grok AI");
-        Assert.Equal(["104.18.28.234 grok.com"], grok.Lines);
+        Assert.Equal(["104.18.28.234 grok.com", "104.18.29.234 grok.com"], grok.Lines);
     }
 
     private static string RepoRoot()

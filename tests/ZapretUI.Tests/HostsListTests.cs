@@ -147,6 +147,33 @@ public class HostsListTests
         Assert.Equal(["104.18.28.234 grok.com", "172.66.0.227 wr.x.com"], grok.Lines);
     }
 
+    [Fact]
+    public async Task RefreshLines_updates_only_that_lists_addresses()
+    {
+        var refresh = await HostsAddressRefresher.RefreshLinesAsync(
+            ["1.1.1.1 grok.com", "2.2.2.2 grok.com", "9.9.9.9 x.ai"],
+            (host, _) => Task.FromResult<IPAddress?>(host == "grok.com" ? IPAddress.Parse("104.18.28.234") : null));
+
+        Assert.Equal(["104.18.28.234 grok.com", "9.9.9.9 x.ai"], refresh.Lines);
+        Assert.Equal(1, refresh.Resolved);
+        Assert.Equal(1, refresh.Kept);
+
+        const string content = """
+            # OpenAI
+            1.1.1.1 chatgpt.com
+
+            # Grok AI
+            8.8.8.8 grok.com
+            8.8.4.4 grok.com
+            """;
+        var updated = HostsAddressRefresher.ReplaceNamedSection(content, "Grok AI", refresh.Lines.Take(1).ToArray());
+        Assert.Contains("1.1.1.1 chatgpt.com", updated, StringComparison.Ordinal);
+        Assert.Contains("104.18.28.234 grok.com", updated, StringComparison.Ordinal);
+        Assert.DoesNotContain("8.8.8.8", updated, StringComparison.Ordinal);
+        var grok = Assert.Single(HostsListParser.ParseSections(updated, "geohide"), section => section.Title == "Grok AI");
+        Assert.Equal(["104.18.28.234 grok.com"], grok.Lines);
+    }
+
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

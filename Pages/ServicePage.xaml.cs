@@ -169,15 +169,8 @@ public partial class ServicePage : UserControl
             Style = (Style)Application.Current.FindResource("SecondaryButton"),
             Margin = new Thickness(0, 0, 8, 8)
         };
-        var fixHosts = new Button
-        {
-            Content = Loc.T("service.hosts_fix"),
-            Style = (Style)Application.Current.FindResource("SecondaryButton"),
-            Margin = new Thickness(0, 0, 8, 8)
-        };
         hostsActions.Children.Add(openHostsFolder);
         hostsActions.Children.Add(refreshHosts);
-        hostsActions.Children.Add(fixHosts);
         hostsStack.Children.Add(hostsActions);
         hostsStack.Children.Add(BuildHostSearch());
         var hostsStatus = new TextBlock
@@ -190,9 +183,9 @@ public partial class ServicePage : UserControl
         hostsCard.Child = hostsStack;
         root.Children.Add(hostsCard);
         var hostsRowsFrom = hostsStack.Children.Count;
-        Loaded += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, fixHosts, hostsRowsFrom, announce: false, collapse: false);
-        refreshHosts.Click += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, fixHosts, hostsRowsFrom, announce: true, collapse: true);
-        fixHosts.Click += async (_, _) => await FixHostAddressesAsync(hostsStack, hostsStatus, refreshHosts, fixHosts, hostsRowsFrom);
+        _hostsRefreshButton = refreshHosts;
+        Loaded += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, hostsRowsFrom, announce: false);
+        refreshHosts.Click += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, hostsRowsFrom, announce: true);
 
         // Updates
         root.Children.Add(Section(Loc.T("service.section_updates")));
@@ -527,6 +520,7 @@ public partial class ServicePage : UserControl
     }
 
     private int _hostsLoad;
+    private Button? _hostsRefreshButton;
     private string _hostsQuery = "";
     private bool _hostsExpanded;
     private Button? _hostsMore;
@@ -539,26 +533,17 @@ public partial class ServicePage : UserControl
         public required string Haystack { get; init; }
     }
 
-    private async Task LoadHostTogglesAsync(StackPanel panel, TextBlock status, Button refresh, Button fix, int rowsFrom, bool announce, bool collapse)
+    private async Task LoadHostTogglesAsync(StackPanel panel, TextBlock status, Button refresh, int rowsFrom, bool announce)
     {
         var load = ++_hostsLoad;
         refresh.IsEnabled = false;
-        fix.IsEnabled = false;
         try
         {
-            if (!collapse)
-            {
-                ShowHostLists(panel, status, rowsFrom, _hostsCatalog.LoadLocal(), announce: false);
-                if (load != _hostsLoad)
-                    return;
-            }
+            ShowHostLists(panel, status, rowsFrom, _hostsCatalog.LoadLocal(), announce: false);
+            if (load != _hostsLoad)
+                return;
 
-            var snapshot = collapse
-                ? await UiHelpers.RunWithLoadingAsync(
-                    Window.GetWindow(this),
-                    Loc.T("service.hosts_fix_wait"),
-                    () => _hostsCatalog.RefreshAppliedAsync(collapseAddresses: true))
-                : await _hostsCatalog.RefreshAppliedAsync();
+            var snapshot = await _hostsCatalog.RefreshAppliedAsync();
             if (load != _hostsLoad)
                 return;
 
@@ -575,30 +560,27 @@ public partial class ServicePage : UserControl
         finally
         {
             if (load == _hostsLoad)
-            {
                 refresh.IsEnabled = true;
-                fix.IsEnabled = true;
-            }
         }
     }
 
-    private async Task FixHostAddressesAsync(StackPanel panel, TextBlock status, Button refresh, Button fix, int rowsFrom)
+    private async Task FixSectionAddressesAsync(StackPanel panel, TextBlock status, int rowsFrom, HostListSection list)
     {
         var load = ++_hostsLoad;
-        refresh.IsEnabled = false;
-        fix.IsEnabled = false;
+        if (_hostsRefreshButton is not null)
+            _hostsRefreshButton.IsEnabled = false;
         try
         {
-            var (snapshot, result) = await UiHelpers.RunWithLoadingAsync(
+            var (snapshot, resolved, kept) = await UiHelpers.RunWithLoadingAsync(
                 Window.GetWindow(this),
-                Loc.T("service.hosts_fix_wait"),
-                () => _hostsCatalog.RefreshAddressesAsync());
+                Loc.F("service.hosts_fix_wait", list.Title),
+                () => _hostsCatalog.RefreshSectionAddressesAsync(list));
             if (load != _hostsLoad)
                 return;
 
             ShowHostLists(panel, status, rowsFrom, snapshot, announce: false);
             if (Window.GetWindow(this) is MainWindow window)
-                window.ShowToast(Loc.F("service.hosts_fix_done", result.Resolved, result.Kept));
+                window.ShowToast(Loc.F("service.hosts_fix_done", resolved, kept));
         }
         catch (Exception ex)
         {
@@ -609,11 +591,8 @@ public partial class ServicePage : UserControl
         }
         finally
         {
-            if (load == _hostsLoad)
-            {
-                refresh.IsEnabled = true;
-                fix.IsEnabled = true;
-            }
+            if (load == _hostsLoad && _hostsRefreshButton is not null)
+                _hostsRefreshButton.IsEnabled = true;
         }
     }
 
@@ -647,7 +626,7 @@ public partial class ServicePage : UserControl
         _hostRows.Clear();
         foreach (var section in snapshot.Sections)
         {
-            var row = HostToggleRow(section);
+            var row = HostToggleRow(section, panel, status, rowsFrom);
             _hostRows.Add(new HostListRow
             {
                 Element = row,
@@ -756,7 +735,7 @@ public partial class ServicePage : UserControl
             : Loc.F("service.hosts_search_found", matches);
     }
 
-    private UIElement HostToggleRow(HostListSection list)
+    private UIElement HostToggleRow(HostListSection list, StackPanel panel, TextBlock status, int rowsFrom)
     {
         var root = new StackPanel();
         var row = new DockPanel { LastChildFill = true };
@@ -775,6 +754,14 @@ public partial class ServicePage : UserControl
             Margin = new Thickness(8, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center
         };
+        var fix = new Button
+        {
+            Content = Loc.T("service.hosts_fix"),
+            Style = (Style)Application.Current.FindResource("SecondaryButton"),
+            Padding = new Thickness(10, 4, 10, 4),
+            Margin = new Thickness(8, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center
+        };
         var preview = new TextEditor
         {
             Text = string.Join(Environment.NewLine, list.Lines),
@@ -786,8 +773,10 @@ public partial class ServicePage : UserControl
 
         DockPanel.SetDock(toggle, Dock.Right);
         DockPanel.SetDock(show, Dock.Right);
+        DockPanel.SetDock(fix, Dock.Right);
         row.Children.Add(toggle);
         row.Children.Add(show);
+        row.Children.Add(fix);
         row.Children.Add(new TextBlock
         {
             Text = list.Title,
@@ -801,6 +790,7 @@ public partial class ServicePage : UserControl
             preview.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
             show.Content = open ? Loc.T("service.hosts_hide_entries") : Loc.T("service.hosts_show_entries");
         };
+        fix.Click += async (_, _) => await FixSectionAddressesAsync(panel, status, rowsFrom, list);
         toggle.Checked += async (_, _) => await ApplyHostToggleAsync(toggle, list, true);
         toggle.Unchecked += async (_, _) => await ApplyHostToggleAsync(toggle, list, false);
 

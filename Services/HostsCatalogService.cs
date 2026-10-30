@@ -46,6 +46,26 @@ public sealed class HostsCatalogService
         return ApplyChangedBlocks(snapshot);
     }
 
+    public async Task<(HostsCatalogSnapshot Snapshot, int Resolved, int Kept)> RefreshSectionAddressesAsync(HostListSection section, CancellationToken ct = default)
+    {
+        ForgetLegacyMalw();
+        var refresh = await HostsAddressRefresher.RefreshLinesAsync(section.Lines, ct).ConfigureAwait(false);
+        if (section.Id.Equals("flowseal", StringComparison.OrdinalIgnoreCase))
+        {
+            SaveCache("flowseal.hosts", string.Join('\n', refresh.Lines) + "\n");
+        }
+        else
+        {
+            var geo = ReadGeoHide() ?? "";
+            SaveCache(GeoHideCache, HostsAddressRefresher.ReplaceNamedSection(geo, section.Title, refresh.Lines));
+        }
+
+        var flowseal = ReadCache("flowseal.hosts") ?? ReadBundled("flowseal.hosts") ?? "";
+        var geoText = ReadGeoHide() ?? "";
+        var snapshot = ApplyChangedBlocks(Build(flowseal, geoText, fromNetwork: true, builtIn: false));
+        return (snapshot, refresh.Resolved, refresh.Kept);
+    }
+
     public async Task<(HostsCatalogSnapshot Snapshot, HostsAddressRefreshResult Refresh)> RefreshAddressesAsync(CancellationToken ct = default)
     {
         ForgetLegacyMalw();

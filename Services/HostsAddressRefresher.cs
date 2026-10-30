@@ -9,6 +9,8 @@ namespace ZapretUI.Services;
 
 public sealed record HostsAddressRefreshResult(string Content, int Resolved, int Kept);
 
+public sealed record HostLinesRefresh(IReadOnlyList<string> Lines, int Resolved, int Kept);
+
 public static class HostsAddressRefresher
 {
     private const string Preamble = "\u0001";
@@ -56,12 +58,81 @@ public static class HostsAddressRefresher
                 sections.Add((section.Title, rows));
         }
 
+        var (chosen, resolved, kept) = await ResolveRowsAsync(sections.SelectMany(section => section.Rows), resolve, ct).ConfigureAwait(false);
+
+        var text = new StringBuilder();
+        text.AppendLine("### geohide.ru: hosts file");
+        text.AppendLine("# Обновлено Aeroway: один A-адрес на домен");
+        foreach (var section in sections)
+        {
+            text.AppendLine();
+            if (section.Title != Preamble)
+                text.Append("# ").AppendLine(section.Title);
+            foreach (var row in section.Rows)
+                text.Append(chosen[row.Host]).Append(' ').AppendLine(row.Host);
+        }
+
+        return new HostsAddressRefreshResult(text.ToString().TrimEnd() + Environment.NewLine, resolved, kept);
+    }
+
+    public static Task<HostLinesRefresh> RefreshLinesAsync(IReadOnlyList<string> lines, CancellationToken ct = default) =>
+        RefreshLinesAsync(lines, ResolveLowestAAsync, ct);
+
+    public static async Task<HostLinesRefresh> RefreshLinesAsync(
+        IReadOnlyList<string> lines,
+        Func<string, CancellationToken, Task<IPAddress?>> resolve,
+        CancellationToken ct = default)
+    {
+        var rows = new List<(string Host, string Fallback)>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in lines)
+        {
+            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 2)
+                continue;
+            for (var i = 1; i < parts.Length; i++)
+            {
+                if (!seen.Add(parts[i]))
+                    continue;
+                rows.Add((parts[i], parts[0]));
+            }
+        }
+
+        var (chosen, resolved, kept) = await ResolveRowsAsync(rows, resolve, ct).ConfigureAwait(false);
+        var rewritten = rows.Select(row => chosen[row.Host] + " " + row.Host).ToList();
+        return new HostLinesRefresh(rewritten, resolved, kept);
+    }
+
+    public static string ReplaceNamedSection(string content, string title, IReadOnlyList<string> lines)
+    {
+        var rows = content.Replace("\r\n", "\n").Split('\n').ToList();
+        var start = rows.FindIndex(line => line.Trim() == "# " + title);
+        if (start < 0)
+            throw new InvalidOperationException("Раздел не найден: " + title);
+
+        var end = start + 1;
+        while (end < rows.Count && !rows[end].TrimStart().StartsWith('#'))
+            end++;
+
+        rows.RemoveRange(start + 1, end - start - 1);
+        var insert = new List<string>(lines);
+        if (start + 1 < rows.Count)
+            insert.Add("");
+        rows.InsertRange(start + 1, insert);
+        return string.Join('\n', rows).TrimEnd() + "\n";
+    }
+
+    private static async Task<(System.Collections.Concurrent.ConcurrentDictionary<string, string> Chosen, int Resolved, int Kept)> ResolveRowsAsync(
+        IEnumerable<(string Host, string Fallback)> rows,
+        Func<string, CancellationToken, Task<IPAddress?>> resolve,
+        CancellationToken ct)
+    {
         var chosen = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var resolved = 0;
         var kept = 0;
         using var gate = new SemaphoreSlim(12);
         var tasks = new List<Task>();
-        foreach (var row in sections.SelectMany(section => section.Rows))
+        foreach (var row in rows)
         {
             tasks.Add(Task.Run(async () =>
             {
@@ -88,20 +159,7 @@ public static class HostsAddressRefresher
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
-
-        var text = new StringBuilder();
-        text.AppendLine("### geohide.ru: hosts file");
-        text.AppendLine("# Обновлено Aeroway: один A-адрес на домен");
-        foreach (var section in sections)
-        {
-            text.AppendLine();
-            if (section.Title != Preamble)
-                text.Append("# ").AppendLine(section.Title);
-            foreach (var row in section.Rows)
-                text.Append(chosen[row.Host]).Append(' ').AppendLine(row.Host);
-        }
-
-        return new HostsAddressRefreshResult(text.ToString().TrimEnd() + Environment.NewLine, resolved, kept);
+        return (chosen, resolved, kept);
     }
 
     public static string KeepExtraHosts(string refreshed, string previous)

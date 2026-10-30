@@ -172,6 +172,7 @@ public partial class ServicePage : UserControl
         hostsActions.Children.Add(openHostsFolder);
         hostsActions.Children.Add(refreshHosts);
         hostsStack.Children.Add(hostsActions);
+        hostsStack.Children.Add(BuildHostSearch());
         var hostsStatus = new TextBlock
         {
             Text = Loc.T("service.hosts_loading"),
@@ -518,6 +519,17 @@ public partial class ServicePage : UserControl
     }
 
     private int _hostsLoad;
+    private string _hostsQuery = "";
+    private bool _hostsExpanded;
+    private Button? _hostsMore;
+    private TextBlock? _hostsSearchStatus;
+    private readonly List<HostListRow> _hostRows = [];
+
+    private sealed class HostListRow
+    {
+        public required UIElement Element { get; init; }
+        public required string Haystack { get; init; }
+    }
 
     private async Task LoadHostTogglesAsync(StackPanel panel, TextBlock status, Button refresh, int rowsFrom, bool announce)
     {
@@ -577,42 +589,119 @@ public partial class ServicePage : UserControl
                     : offline);
         }
 
-        var hidden = new List<UIElement>();
-        for (var i = 0; i < snapshot.Sections.Count; i++)
+        _hostRows.Clear();
+        foreach (var section in snapshot.Sections)
         {
-            var row = HostToggleRow(snapshot.Sections[i], i);
-            if (i >= 5)
+            var row = HostToggleRow(section);
+            _hostRows.Add(new HostListRow
             {
-                row.Visibility = Visibility.Collapsed;
-                hidden.Add(row);
-            }
-
+                Element = row,
+                Haystack = section.Title + "\n" + string.Join('\n', section.Lines)
+            });
             panel.Children.Add(row);
         }
 
-        if (hidden.Count == 0)
-            return;
-
-        var more = new Button
+        _hostsMore = new Button
         {
-            Content = Loc.F("service.hosts_show_all", hidden.Count),
             Style = (Style)Application.Current.FindResource("SecondaryButton"),
             HorizontalAlignment = HorizontalAlignment.Left,
             Margin = new Thickness(0, 12, 0, 0)
         };
-        more.Click += (_, _) =>
+        _hostsMore.Click += (_, _) =>
         {
-            var open = hidden[0].Visibility != Visibility.Visible;
-            foreach (var item in hidden)
-                item.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
-            more.Content = open
-                ? Loc.T("service.hosts_hide")
-                : Loc.F("service.hosts_show_all", hidden.Count);
+            _hostsExpanded = !_hostsExpanded;
+            ApplyHostFilter();
         };
-        panel.Children.Add(more);
+        panel.Children.Add(_hostsMore);
+        ApplyHostFilter();
     }
 
-    private UIElement HostToggleRow(HostListSection list, int index)
+    private UIElement BuildHostSearch()
+    {
+        var box = new TextBox();
+        var watermark = new TextBlock
+        {
+            Text = Loc.T("service.hosts_search"),
+            Margin = new Thickness(12, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            IsHitTestVisible = false,
+            Foreground = (Brush)Application.Current.FindResource("TextMutedBrush")
+        };
+        _hostsSearchStatus = new TextBlock
+        {
+            Foreground = (Brush)Application.Current.FindResource("TextMutedBrush"),
+            Margin = new Thickness(0, 0, 0, 4),
+            Visibility = Visibility.Collapsed
+        };
+        box.TextChanged += (_, _) =>
+        {
+            _hostsQuery = box.Text;
+            watermark.Visibility = string.IsNullOrEmpty(box.Text) ? Visibility.Visible : Visibility.Collapsed;
+            ApplyHostFilter();
+        };
+
+        var grid = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+        grid.Children.Add(box);
+        grid.Children.Add(watermark);
+        var stack = new StackPanel();
+        stack.Children.Add(grid);
+        stack.Children.Add(_hostsSearchStatus);
+        return stack;
+    }
+
+    private void ApplyHostFilter()
+    {
+        var query = _hostsQuery.Trim();
+        var searching = query.Length > 0;
+        var matches = 0;
+        var shown = 0;
+        foreach (var row in _hostRows)
+        {
+            var match = !searching || row.Haystack.Contains(query, StringComparison.OrdinalIgnoreCase);
+            if (!match)
+            {
+                row.Element.Visibility = Visibility.Collapsed;
+                continue;
+            }
+
+            matches++;
+            var visible = searching || _hostsExpanded || shown < 5;
+            row.Element.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+            if (!visible || row.Element is not Border band)
+                continue;
+
+            if (shown % 2 == 1)
+                band.SetResourceReference(Border.BackgroundProperty, "SurfaceLightBrush");
+            else
+                band.ClearValue(Border.BackgroundProperty);
+            shown++;
+        }
+
+        if (_hostsMore is not null)
+        {
+            var canFold = !searching && _hostRows.Count > 5;
+            _hostsMore.Visibility = canFold ? Visibility.Visible : Visibility.Collapsed;
+            _hostsMore.Content = _hostsExpanded
+                ? Loc.T("service.hosts_hide")
+                : Loc.F("service.hosts_show_all", Math.Max(0, _hostRows.Count - 5));
+        }
+
+        if (_hostsSearchStatus is null)
+            return;
+
+        if (!searching)
+        {
+            _hostsSearchStatus.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        _hostsSearchStatus.Visibility = Visibility.Visible;
+        _hostsSearchStatus.Text = matches == 0
+            ? Loc.T("service.hosts_search_none")
+            : Loc.F("service.hosts_search_found", matches);
+    }
+
+    private UIElement HostToggleRow(HostListSection list)
     {
         var root = new StackPanel();
         var row = new DockPanel { LastChildFill = true };
@@ -672,8 +761,6 @@ public partial class ServicePage : UserControl
             Child = root
         };
         band.SetResourceReference(Border.BorderBrushProperty, "BorderBrush");
-        if (index % 2 == 1)
-            band.SetResourceReference(Border.BackgroundProperty, "SurfaceLightBrush");
         return band;
     }
 

@@ -580,7 +580,7 @@ public partial class ServicePage : UserControl
         var hidden = new List<UIElement>();
         for (var i = 0; i < snapshot.Sections.Count; i++)
         {
-            var row = HostToggleRow(snapshot.Sections[i]);
+            var row = HostToggleRow(snapshot.Sections[i], i);
             if (i >= 5)
             {
                 row.Visibility = Visibility.Collapsed;
@@ -612,9 +612,9 @@ public partial class ServicePage : UserControl
         panel.Children.Add(more);
     }
 
-    private StackPanel HostToggleRow(HostListSection list)
+    private UIElement HostToggleRow(HostListSection list, int index)
     {
-        var root = new StackPanel { Margin = new Thickness(0, 10, 0, 0) };
+        var root = new StackPanel();
         var row = new DockPanel { LastChildFill = true };
         var toggle = new ToggleButton
         {
@@ -662,7 +662,19 @@ public partial class ServicePage : UserControl
 
         root.Children.Add(row);
         root.Children.Add(preview);
-        return root;
+
+        var band = new Border
+        {
+            Padding = new Thickness(12, 8, 12, 8),
+            Margin = new Thickness(-16, 0, -16, 0),
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            SnapsToDevicePixels = true,
+            Child = root
+        };
+        band.SetResourceReference(Border.BorderBrushProperty, "BorderBrush");
+        if (index % 2 == 1)
+            band.SetResourceReference(Border.BackgroundProperty, "SurfaceLightBrush");
+        return band;
     }
 
     private static void OpenHostsFolder()

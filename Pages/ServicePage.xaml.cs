@@ -169,8 +169,15 @@ public partial class ServicePage : UserControl
             Style = (Style)Application.Current.FindResource("SecondaryButton"),
             Margin = new Thickness(0, 0, 8, 8)
         };
+        var fixHosts = new Button
+        {
+            Content = Loc.T("service.hosts_fix"),
+            Style = (Style)Application.Current.FindResource("SecondaryButton"),
+            Margin = new Thickness(0, 0, 8, 8)
+        };
         hostsActions.Children.Add(openHostsFolder);
         hostsActions.Children.Add(refreshHosts);
+        hostsActions.Children.Add(fixHosts);
         hostsStack.Children.Add(hostsActions);
         hostsStack.Children.Add(BuildHostSearch());
         var hostsStatus = new TextBlock
@@ -183,8 +190,9 @@ public partial class ServicePage : UserControl
         hostsCard.Child = hostsStack;
         root.Children.Add(hostsCard);
         var hostsRowsFrom = hostsStack.Children.Count;
-        Loaded += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, hostsRowsFrom, announce: false);
-        refreshHosts.Click += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, hostsRowsFrom, announce: true);
+        Loaded += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, fixHosts, hostsRowsFrom, announce: false, collapse: false);
+        refreshHosts.Click += async (_, _) => await LoadHostTogglesAsync(hostsStack, hostsStatus, refreshHosts, fixHosts, hostsRowsFrom, announce: true, collapse: true);
+        fixHosts.Click += async (_, _) => await FixHostAddressesAsync(hostsStack, hostsStatus, refreshHosts, fixHosts, hostsRowsFrom);
 
         // Updates
         root.Children.Add(Section(Loc.T("service.section_updates")));
@@ -531,17 +539,26 @@ public partial class ServicePage : UserControl
         public required string Haystack { get; init; }
     }
 
-    private async Task LoadHostTogglesAsync(StackPanel panel, TextBlock status, Button refresh, int rowsFrom, bool announce)
+    private async Task LoadHostTogglesAsync(StackPanel panel, TextBlock status, Button refresh, Button fix, int rowsFrom, bool announce, bool collapse)
     {
         var load = ++_hostsLoad;
         refresh.IsEnabled = false;
+        fix.IsEnabled = false;
         try
         {
-            ShowHostLists(panel, status, rowsFrom, _hostsCatalog.LoadLocal(), announce: false);
-            if (load != _hostsLoad)
-                return;
+            if (!collapse)
+            {
+                ShowHostLists(panel, status, rowsFrom, _hostsCatalog.LoadLocal(), announce: false);
+                if (load != _hostsLoad)
+                    return;
+            }
 
-            var snapshot = await _hostsCatalog.RefreshAppliedAsync();
+            var snapshot = collapse
+                ? await UiHelpers.RunWithLoadingAsync(
+                    Window.GetWindow(this),
+                    Loc.T("service.hosts_fix_wait"),
+                    () => _hostsCatalog.RefreshAppliedAsync(collapseAddresses: true))
+                : await _hostsCatalog.RefreshAppliedAsync();
             if (load != _hostsLoad)
                 return;
 
@@ -558,7 +575,45 @@ public partial class ServicePage : UserControl
         finally
         {
             if (load == _hostsLoad)
+            {
                 refresh.IsEnabled = true;
+                fix.IsEnabled = true;
+            }
+        }
+    }
+
+    private async Task FixHostAddressesAsync(StackPanel panel, TextBlock status, Button refresh, Button fix, int rowsFrom)
+    {
+        var load = ++_hostsLoad;
+        refresh.IsEnabled = false;
+        fix.IsEnabled = false;
+        try
+        {
+            var (snapshot, result) = await UiHelpers.RunWithLoadingAsync(
+                Window.GetWindow(this),
+                Loc.T("service.hosts_fix_wait"),
+                () => _hostsCatalog.RefreshAddressesAsync());
+            if (load != _hostsLoad)
+                return;
+
+            ShowHostLists(panel, status, rowsFrom, snapshot, announce: false);
+            if (Window.GetWindow(this) is MainWindow window)
+                window.ShowToast(Loc.F("service.hosts_fix_done", result.Resolved, result.Kept));
+        }
+        catch (Exception ex)
+        {
+            if (load != _hostsLoad)
+                return;
+            status.Text = Loc.F("service.hosts_fix_failed", ex.Message);
+            status.Visibility = Visibility.Visible;
+        }
+        finally
+        {
+            if (load == _hostsLoad)
+            {
+                refresh.IsEnabled = true;
+                fix.IsEnabled = true;
+            }
         }
     }
 

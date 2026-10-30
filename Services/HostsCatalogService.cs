@@ -27,27 +27,40 @@ public sealed class HostsCatalogService
         ForgetLegacyMalw();
         var flowsealCache = ReadCache("flowseal.hosts");
         var geoCache = ReadCache(GeoHideCache);
+        if (geoCache is not null && HostsAddressRefresher.HasDuplicateHosts(geoCache))
+        {
+            try { File.Delete(Path.Combine(CacheDir, GeoHideCache)); }
+            catch { /* the bundled list is used instead */ }
+            geoCache = null;
+        }
+
         var flowseal = flowsealCache ?? ReadBundled("flowseal.hosts") ?? "";
         var geo = geoCache ?? ReadBundled(GeoHideCache) ?? "";
         return Build(flowseal, geo, fromNetwork: false, builtIn: geoCache is null);
     }
 
-    public async Task<HostsCatalogSnapshot> RefreshAppliedAsync(CancellationToken ct = default)
+    public async Task<HostsCatalogSnapshot> RefreshAppliedAsync(CancellationToken ct = default, bool collapseAddresses = false)
     {
         ForgetLegacyMalw();
-        var snapshot = await TryLoadNetworkAsync(ct).ConfigureAwait(false) ?? LoadLocal();
-        var pending = snapshot.Sections
-            .Where(section => SystemHostsFile.HasBlock(section.Id) && !SystemHostsFile.BlockMatches(section.Id, section.Lines))
-            .ToList();
-        for (var i = 0; i < pending.Count; i++)
-            SystemHostsFile.SetBlock(pending[i].Id, pending[i].Lines, flushDns: i == pending.Count - 1);
-        return snapshot with { UpdatedBlocks = pending.Count };
+        var snapshot = await TryLoadNetworkAsync(ct, collapseAddresses).ConfigureAwait(false) ?? LoadLocal();
+        return ApplyChangedBlocks(snapshot);
+    }
+
+    public async Task<(HostsCatalogSnapshot Snapshot, HostsAddressRefreshResult Refresh)> RefreshAddressesAsync(CancellationToken ct = default)
+    {
+        ForgetLegacyMalw();
+        var geo = ReadGeoHide() ?? "";
+        var refresh = await HostsAddressRefresher.RefreshAsync(geo, ct).ConfigureAwait(false);
+        SaveCache(GeoHideCache, refresh.Content);
+        var flowseal = ReadCache("flowseal.hosts") ?? ReadBundled("flowseal.hosts") ?? "";
+        var snapshot = ApplyChangedBlocks(Build(flowseal, refresh.Content, fromNetwork: true, builtIn: false));
+        return (snapshot, refresh);
     }
 
     public Task<HostsCatalogSnapshot> LoadAsync(CancellationToken ct = default) =>
         RefreshAppliedAsync(ct);
 
-    private async Task<HostsCatalogSnapshot?> TryLoadNetworkAsync(CancellationToken ct)
+    private async Task<HostsCatalogSnapshot?> TryLoadNetworkAsync(CancellationToken ct, bool collapseAddresses)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromSeconds(8));
@@ -57,11 +70,27 @@ public sealed class HostsCatalogService
         var geoTask = DownloadGeoHideSafeAsync(token);
         await Task.WhenAll(flowsealTask, geoTask).ConfigureAwait(false);
 
-        var geo = await geoTask.ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(geo))
-            return null;
+        var downloaded = await geoTask.ConfigureAwait(false);
+        var local = ReadGeoHide();
+        string? geo;
+        if (collapseAddresses)
+        {
+            var source = string.IsNullOrWhiteSpace(downloaded) ? local : downloaded;
+            if (string.IsNullOrWhiteSpace(source))
+                return null;
+            var refresh = await HostsAddressRefresher.RefreshAsync(source, ct).ConfigureAwait(false);
+            geo = string.IsNullOrWhiteSpace(local)
+                ? refresh.Content
+                : HostsAddressRefresher.KeepExtraHosts(refresh.Content, local);
+            SaveCache(GeoHideCache, geo);
+        }
+        else
+        {
+            geo = local;
+            if (string.IsNullOrWhiteSpace(geo))
+                return null;
+        }
 
-        SaveCache(GeoHideCache, geo);
         var flowsealDownload = await flowsealTask.ConfigureAwait(false);
         string flowseal;
         if (flowsealDownload is not null)
@@ -75,6 +104,16 @@ public sealed class HostsCatalogService
         }
 
         return Build(flowseal, geo, fromNetwork: true, builtIn: false);
+    }
+
+    private HostsCatalogSnapshot ApplyChangedBlocks(HostsCatalogSnapshot snapshot)
+    {
+        var pending = snapshot.Sections
+            .Where(section => SystemHostsFile.HasBlock(section.Id) && !SystemHostsFile.BlockMatches(section.Id, section.Lines))
+            .ToList();
+        for (var i = 0; i < pending.Count; i++)
+            SystemHostsFile.SetBlock(pending[i].Id, pending[i].Lines, flushDns: i == pending.Count - 1);
+        return snapshot with { UpdatedBlocks = pending.Count };
     }
 
     private async Task<string?> DownloadFlowsealSafeAsync(CancellationToken ct)
@@ -153,6 +192,14 @@ public sealed class HostsCatalogService
     {
         Directory.CreateDirectory(CacheDir);
         File.WriteAllText(Path.Combine(CacheDir, name), content);
+    }
+
+    private static string? ReadGeoHide()
+    {
+        var cache = ReadCache(GeoHideCache);
+        if (cache is not null && !HostsAddressRefresher.HasDuplicateHosts(cache))
+            return cache;
+        return ReadBundled(GeoHideCache);
     }
 
     private static string? ReadCache(string name) => ReadTextFile(Path.Combine(CacheDir, name));

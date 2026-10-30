@@ -529,8 +529,11 @@ public partial class ServicePage : UserControl
 
     private sealed class HostListRow
     {
+        public required string Id { get; init; }
+        public required int Order { get; init; }
         public required UIElement Element { get; init; }
         public required string Haystack { get; init; }
+        public bool Enabled { get; set; }
     }
 
     private async Task LoadHostTogglesAsync(StackPanel panel, TextBlock status, Button refresh, int rowsFrom, bool announce)
@@ -624,16 +627,23 @@ public partial class ServicePage : UserControl
         }
 
         _hostRows.Clear();
+        var order = 0;
         foreach (var section in snapshot.Sections)
         {
             var row = HostToggleRow(section, panel, status, rowsFrom);
             _hostRows.Add(new HostListRow
             {
+                Id = section.Id,
+                Order = order++,
                 Element = row,
-                Haystack = section.Title + "\n" + string.Join('\n', section.Lines)
+                Haystack = section.Title + "\n" + string.Join('\n', section.Lines),
+                Enabled = SystemHostsFile.Covers(section.Id, section.Lines)
             });
-            panel.Children.Add(row);
         }
+
+        _hostRows.Sort(CompareHostRows);
+        foreach (var row in _hostRows)
+            panel.Children.Add(row.Element);
 
         _hostsMore = new Button
         {
@@ -809,6 +819,29 @@ public partial class ServicePage : UserControl
         return band;
     }
 
+    private static int CompareHostRows(HostListRow left, HostListRow right)
+    {
+        var byState = right.Enabled.CompareTo(left.Enabled);
+        return byState != 0 ? byState : left.Order.CompareTo(right.Order);
+    }
+
+    private void PlaceEnabledHostsFirst()
+    {
+        if (_hostRows.Count == 0 || _hostRows[0].Element is not FrameworkElement element || element.Parent is not Panel panel)
+            return;
+
+        _hostRows.Sort(CompareHostRows);
+        foreach (var row in _hostRows)
+            panel.Children.Remove(row.Element);
+
+        var insertAt = _hostsMore is null ? panel.Children.Count : panel.Children.IndexOf(_hostsMore);
+        if (insertAt < 0)
+            insertAt = panel.Children.Count;
+        for (var i = 0; i < _hostRows.Count; i++)
+            panel.Children.Insert(insertAt + i, _hostRows[i].Element);
+        ApplyHostFilter();
+    }
+
     private static void OpenHostsFolder()
     {
         var file = SystemHostsFile.DefaultPath;
@@ -834,6 +867,13 @@ public partial class ServicePage : UserControl
                 await Task.Run(() => SystemHostsFile.SetBlock(list.Id, list.Lines));
             else
                 await Task.Run(() => SystemHostsFile.RemoveEntries(list.Id, list.Lines));
+
+            var row = _hostRows.Find(item => item.Id.Equals(list.Id, StringComparison.OrdinalIgnoreCase));
+            if (row is null)
+                return;
+
+            row.Enabled = enabled;
+            PlaceEnabledHostsFirst();
         }
         catch (Exception ex)
         {

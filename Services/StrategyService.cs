@@ -85,11 +85,15 @@ public sealed class StrategyService
 
     private async Task LaunchWinwsAsync(string batFileName, CancellationToken ct)
     {
+        new ListFileService(_paths).EnsureUserLists();
         var args = StrategyBatParser.Parse(_paths, batFileName);
         if (string.IsNullOrWhiteSpace(args))
             throw new InvalidOperationException(Loc.T("strategy.winws_not_started"));
 
-        var missing = ZapretHealth.MissingFiles(_paths);
+        var missing = ZapretHealth.MissingFiles(_paths)
+            .Concat(ZapretHealth.MissingReferencedFiles(args))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         if (missing.Count > 0)
             throw new FileNotFoundException(Loc.F("strategy.files_missing", string.Join(", ", missing)));
 

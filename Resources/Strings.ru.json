@@ -127,7 +127,7 @@
   "service.update_ipset": "Обновить IPSet List",
   "service.update_hosts": "Обновить Hosts File",
   "service.section_hosts": "Адреса сайтов",
-  "service.hosts_desc": "Тумблер сам дописывает свой список в hosts и сам его убирает. Чужие строки файла не трогает. Flowseal — адреса GitHub, Telegram и Discord для обхода. Остальные списки прописывают адреса своих сайтов: компьютер открывает эти имена по ним, не спрашивая DNS.",
+  "service.hosts_desc": "Тумблер сам дописывает свой список в hosts и сам его убирает. Чужие строки файла не трогает. Flowseal — адреса GitHub, Telegram и Discord для обхода. Остальные списки берутся из GeoHide: компьютер открывает эти имена по указанным адресам, не спрашивая DNS.",
   "service.hosts_open_folder": "Открыть папку hosts",
   "service.hosts_refresh": "Обновить списки",
   "service.hosts_refresh_ok": "Списки актуальны. В hosts ничего менять не пришлось.",

@@ -77,8 +77,11 @@ public static class HostsListParser
         var text = header.ToLowerInvariant();
         return text.Contains("обновлен", StringComparison.Ordinal)
                || text.Contains("update", StringComparison.Ordinal)
-               || text.Contains("dns.malw", StringComparison.Ordinal)
-               || text.Contains("hosts file", StringComparison.Ordinal);
+               || text.Contains("hosts file", StringComparison.Ordinal)
+               || text.Contains("ip-адреса", StringComparison.Ordinal)
+               || text.Contains("регион серверов", StringComparison.Ordinal)
+               || text.Contains("сторонн", StringComparison.Ordinal)
+               || IPAddress.TryParse(header, out _);
     }
 
     private static bool TryNormalize(string line, out string entry)

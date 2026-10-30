@@ -12,7 +12,9 @@ public sealed record HostsCatalogSnapshot(
 
 public sealed class HostsCatalogService
 {
-    private const string MalwUrl = "https://raw.githubusercontent.com/ImMALWARE/dns.malw.link/master/hosts";
+    private const string GeoHideUrl = "https://raw.githubusercontent.com/Internet-Helper/GeoHideDNS/refs/heads/main/hosts/hosts";
+    private const string GeoHideCache = "geohide.hosts";
+    private const string LegacyMalwCache = "malw.hosts";
 
     private readonly UpdateService _updates;
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(30) };
@@ -22,15 +24,17 @@ public sealed class HostsCatalogService
 
     public HostsCatalogSnapshot LoadLocal()
     {
+        ForgetLegacyMalw();
         var flowsealCache = ReadCache("flowseal.hosts");
-        var malwCache = ReadCache("malw.hosts");
+        var geoCache = ReadCache(GeoHideCache);
         var flowseal = flowsealCache ?? ReadBundled("flowseal.hosts") ?? "";
-        var malw = malwCache ?? ReadBundled("malw.hosts") ?? "";
-        return Build(flowseal, malw, fromNetwork: false, builtIn: malwCache is null);
+        var geo = geoCache ?? ReadBundled(GeoHideCache) ?? "";
+        return Build(flowseal, geo, fromNetwork: false, builtIn: geoCache is null);
     }
 
     public async Task<HostsCatalogSnapshot> RefreshAppliedAsync(CancellationToken ct = default)
     {
+        ForgetLegacyMalw();
         var snapshot = await TryLoadNetworkAsync(ct).ConfigureAwait(false) ?? LoadLocal();
         var pending = snapshot.Sections
             .Where(section => SystemHostsFile.HasBlock(section.Id) && !SystemHostsFile.BlockMatches(section.Id, section.Lines))
@@ -50,14 +54,14 @@ public sealed class HostsCatalogService
         var token = timeout.Token;
 
         var flowsealTask = DownloadFlowsealSafeAsync(token);
-        var malwTask = DownloadMalwSafeAsync(token);
-        await Task.WhenAll(flowsealTask, malwTask).ConfigureAwait(false);
+        var geoTask = DownloadGeoHideSafeAsync(token);
+        await Task.WhenAll(flowsealTask, geoTask).ConfigureAwait(false);
 
-        var malw = await malwTask.ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(malw))
+        var geo = await geoTask.ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(geo))
             return null;
 
-        SaveCache("malw.hosts", malw);
+        SaveCache(GeoHideCache, geo);
         var flowsealDownload = await flowsealTask.ConfigureAwait(false);
         string flowseal;
         if (flowsealDownload is not null)
@@ -70,7 +74,7 @@ public sealed class HostsCatalogService
             flowseal = ReadCache("flowseal.hosts") ?? ReadBundled("flowseal.hosts") ?? "";
         }
 
-        return Build(flowseal, malw, fromNetwork: true, builtIn: false);
+        return Build(flowseal, geo, fromNetwork: true, builtIn: false);
     }
 
     private async Task<string?> DownloadFlowsealSafeAsync(CancellationToken ct)
@@ -86,11 +90,11 @@ public sealed class HostsCatalogService
         }
     }
 
-    private async Task<string?> DownloadMalwSafeAsync(CancellationToken ct)
+    private async Task<string?> DownloadGeoHideSafeAsync(CancellationToken ct)
     {
         try
         {
-            return await DownloadMalwAsync(ct).ConfigureAwait(false);
+            return await DownloadGeoHideAsync(ct).ConfigureAwait(false);
         }
         catch
         {
@@ -98,14 +102,14 @@ public sealed class HostsCatalogService
         }
     }
 
-    private HostsCatalogSnapshot Build(string flowsealText, string malwText, bool fromNetwork, bool builtIn)
+    private HostsCatalogSnapshot Build(string flowsealText, string geoText, bool fromNetwork, bool builtIn)
     {
         var result = new List<HostListSection>();
         var flowseal = HostsListParser.ParseFlat(flowsealText);
         _lines["flowseal"] = flowseal;
         result.Add(new HostListSection("flowseal", "Flowseal", flowseal));
 
-        foreach (var section in HostsListParser.ParseSections(malwText, "malw", Loc.T("service.hosts_other")))
+        foreach (var section in HostsListParser.ParseSections(geoText, "geohide", Loc.T("service.hosts_other")))
         {
             _lines[section.Id] = section.Lines;
             result.Add(section);
@@ -117,9 +121,22 @@ public sealed class HostsCatalogService
     public IReadOnlyList<string> Lines(string id) =>
         _lines.TryGetValue(id, out var lines) ? lines : throw new InvalidOperationException("Список ещё не загружен.");
 
-    private async Task<string> DownloadMalwAsync(CancellationToken ct)
+    private static void ForgetLegacyMalw()
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, MalwUrl);
+        var legacy = Path.Combine(CacheDir, LegacyMalwCache);
+        if (File.Exists(legacy))
+        {
+            try { File.Delete(legacy); }
+            catch { /* cache stays until the next launch */ }
+        }
+
+        try { SystemHostsFile.RemoveBlocksByPrefix("malw-"); }
+        catch { /* hosts file is locked; the lists are simply no longer offered */ }
+    }
+
+    private async Task<string> DownloadGeoHideAsync(CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, GeoHideUrl);
         request.Headers.UserAgent.Add(new ProductInfoHeaderValue("Aeroway", "1.0"));
         request.Headers.CacheControl = new CacheControlHeaderValue { NoCache = true };
         var response = await _http.SendAsync(request, ct).ConfigureAwait(false);

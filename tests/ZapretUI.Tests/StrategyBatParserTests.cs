@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Xunit;
 using ZapretUI.Services;
 
@@ -47,5 +48,30 @@ public class StrategyBatParserTests
         {
             Directory.Delete(root, true);
         }
+    }
+
+    [Fact]
+    public void Niko_strategy_references_only_bins_shipped_with_zapret()
+    {
+        var root = RepoRoot();
+        var bat = File.ReadAllText(Path.Combine(root, "packaging", "strategies", "Niko_ALT11.bat"));
+        var bins = Regex.Matches(bat, @"%BIN%(?<name>[^""\s%]+\.bin)")
+            .Select(match => match.Groups["name"].Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Assert.NotEmpty(bins);
+        Assert.DoesNotContain(bins, name => name.Contains("dbankcloud", StringComparison.OrdinalIgnoreCase));
+        foreach (var name in bins)
+            Assert.True(File.Exists(Path.Combine(root, "packaging", "zapret", "bin", name)), name);
+    }
+
+    private static string RepoRoot()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "ZapretUI.csproj")))
+            dir = dir.Parent;
+        Assert.NotNull(dir);
+        return dir!.FullName;
     }
 }

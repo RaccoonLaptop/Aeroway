@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace ZapretUI.Services;
 
 public static class ZapretHealth
@@ -13,6 +15,22 @@ public static class ZapretHealth
             missing.Add("WinDivert.dll");
         if (!File.Exists(Path.Combine(paths.Bin, "WinDivert64.sys")))
             missing.Add("WinDivert64.sys");
+        return missing;
+    }
+
+    public static IReadOnlyList<string> MissingReferencedFiles(string args)
+    {
+        var missing = new List<string>();
+        foreach (Match match in Regex.Matches(args, @"""(?<path>[^""]+\.(?:bin|txt))""|(?<path>[^\s""]+\.(?:bin|txt))"))
+        {
+            var path = match.Groups["path"].Value;
+            if (File.Exists(path))
+                continue;
+            var name = Path.GetFileName(path);
+            if (!missing.Contains(name, StringComparer.OrdinalIgnoreCase))
+                missing.Add(name);
+        }
+
         return missing;
     }
 }

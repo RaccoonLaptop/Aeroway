@@ -127,7 +127,7 @@
   "service.update_ipset": "Update IPSet List",
   "service.update_hosts": "Update Hosts File",
   "service.section_hosts": "Site addresses",
-  "service.hosts_desc": "Each switch writes its own list into the hosts file and removes it again. Other lines stay untouched. Flowseal is the GitHub, Telegram and Discord addresses used by the bypass. The other lists write addresses for their own sites, so the PC opens those names there instead of asking DNS.",
+  "service.hosts_desc": "Each switch writes its own list into the hosts file and removes it again. Other lines stay untouched. Flowseal is the GitHub, Telegram and Discord addresses used by the bypass. The other lists come from GeoHide, so the PC opens those names at the listed addresses instead of asking DNS.",
   "service.hosts_open_folder": "Open hosts folder",
   "service.hosts_refresh": "Update lists",
   "service.hosts_refresh_ok": "The lists are current. Nothing in the hosts file had to change.",

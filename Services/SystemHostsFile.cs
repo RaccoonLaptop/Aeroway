@@ -108,6 +108,35 @@ public static class SystemHostsFile
     public static void RemoveBlock(string id, string? path = null) =>
         SetBlock(id, [], path);
 
+    public static int RemoveBlocksByPrefix(string prefix, string? path = null)
+    {
+        lock (Gate)
+        {
+            var file = path ?? DefaultPath;
+            if (!File.Exists(file) || prefix.Length == 0)
+                return 0;
+
+            var lines = File.ReadAllLines(file).ToList();
+            var removed = 0;
+            while (true)
+            {
+                var id = FindBlockId(lines, prefix);
+                if (id is null)
+                    break;
+                lines = RemoveBlock(lines, id);
+                removed++;
+            }
+
+            if (removed == 0)
+                return 0;
+
+            File.WriteAllLines(file, lines);
+            if (path is null)
+                FlushDns();
+            return removed;
+        }
+    }
+
     private static List<string> RemoveBlock(List<string> lines, string id)
     {
         var result = new List<string>();
@@ -228,6 +257,22 @@ public static class SystemHostsFile
         }
 
         return found;
+    }
+
+    private static string? FindBlockId(List<string> lines, string prefix)
+    {
+        const string marker = "# Aeroway:";
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (!trimmed.StartsWith(marker, StringComparison.Ordinal) || trimmed.EndsWith(":end", StringComparison.Ordinal))
+                continue;
+            var id = trimmed[marker.Length..];
+            if (id.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return id;
+        }
+
+        return null;
     }
 
     private static string Begin(string id) => $"# Aeroway:{id}";

@@ -86,10 +86,44 @@ public class HostsListTests
         Assert.Contains(sections, section => section.Lines.Any(line => line.Contains("chatgpt.com", StringComparison.OrdinalIgnoreCase)));
         Assert.False(HostsAddressRefresher.HasDuplicateHosts(File.ReadAllText(path)));
         var grok = Assert.Single(sections, section => section.Title == "Grok AI");
-        Assert.Contains("104.18.28.234 grok.com", grok.Lines);
-        Assert.Contains("104.18.29.234 grok.com", grok.Lines);
-        Assert.Contains("104.18.18.80 x.ai", grok.Lines);
-        Assert.Contains("104.18.19.80 x.ai", grok.Lines);
+        var chatgpt = Assert.Single(sections, section => section.Title == "ChatGPT (OpenAI) AI");
+        Assert.Equal(
+            [
+                "193.233.112.88 chatgpt.com",
+                "193.233.112.68 chatgpt.com",
+                "159.194.200.33 chatgpt.com",
+                "193.233.112.67 chatgpt.com"
+            ],
+            chatgpt.Lines.Take(4));
+        Assert.Equal(
+            [
+                "193.233.112.88 grok.com",
+                "193.233.112.68 grok.com",
+                "159.194.200.33 grok.com",
+                "193.233.112.67 grok.com"
+            ],
+            grok.Lines.Where(line => line.EndsWith(" grok.com", StringComparison.Ordinal)).ToArray());
+        Assert.Contains(sections, section => section.Lines.Contains("130.255.77.28 ntc.party"));
+    }
+
+    [Fact]
+    public void Working_addresses_are_written_for_every_domain_once()
+    {
+        var refresh = HostsAddressRefresher.ApplyWorkingAddresses(
+            ["1.1.1.1 grok.com", "2.2.2.2 grok.com", "9.9.9.9 x.ai"]);
+
+        Assert.Equal(
+            [
+                "193.233.112.88 grok.com",
+                "193.233.112.68 grok.com",
+                "159.194.200.33 grok.com",
+                "193.233.112.67 grok.com",
+                "193.233.112.88 x.ai",
+                "193.233.112.68 x.ai",
+                "159.194.200.33 x.ai",
+                "193.233.112.67 x.ai"
+            ],
+            refresh.Lines);
     }
 
     [Fact]

@@ -574,7 +574,7 @@ public partial class ServicePage : UserControl
             _hostsRefreshButton.IsEnabled = false;
         try
         {
-            var (snapshot, resolved, kept) = await UiHelpers.RunWithLoadingAsync(
+            var (snapshot, _, _) = await UiHelpers.RunWithLoadingAsync(
                 Window.GetWindow(this),
                 Loc.F("service.hosts_fix_wait", list.Title),
                 () => _hostsCatalog.RefreshSectionAddressesAsync(list));
@@ -583,7 +583,7 @@ public partial class ServicePage : UserControl
 
             ShowHostLists(panel, status, rowsFrom, snapshot, announce: false);
             if (Window.GetWindow(this) is MainWindow window)
-                window.ShowToast(Loc.F("service.hosts_fix_done", resolved, kept));
+                window.ShowToast(Loc.F("service.hosts_fix_done", list.Title));
         }
         catch (Exception ex)
         {

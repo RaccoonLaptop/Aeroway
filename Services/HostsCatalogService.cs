@@ -49,7 +49,9 @@ public sealed class HostsCatalogService
     public async Task<(HostsCatalogSnapshot Snapshot, int Resolved, int Kept)> RefreshSectionAddressesAsync(HostListSection section, CancellationToken ct = default)
     {
         ForgetLegacyMalw();
-        var refresh = await HostsAddressRefresher.RefreshLinesAsync(section.Lines, ct).ConfigureAwait(false);
+        var refresh = section.Id.Equals("flowseal", StringComparison.OrdinalIgnoreCase)
+            ? await HostsAddressRefresher.RefreshLinesAsync(section.Lines, ct).ConfigureAwait(false)
+            : HostsAddressRefresher.ApplyWorkingAddresses(section.Lines);
         if (section.Id.Equals("flowseal", StringComparison.OrdinalIgnoreCase))
         {
             SaveCache("flowseal.hosts", string.Join('\n', refresh.Lines) + "\n");

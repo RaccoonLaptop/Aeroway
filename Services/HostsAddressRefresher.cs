@@ -15,13 +15,14 @@ public static class HostsAddressRefresher
 {
     private const string Preamble = "\u0001";
     private static readonly HttpClient Doh = new() { Timeout = TimeSpan.FromSeconds(20) };
-    private static readonly HashSet<string> LegacyProxyAddresses = new(StringComparer.Ordinal)
-    {
-        "159.194.200.33",
-        "193.233.112.67",
+
+    public static readonly string[] WorkingAddresses =
+    [
+        "193.233.112.88",
         "193.233.112.68",
-        "193.233.112.88"
-    };
+        "159.194.200.33",
+        "193.233.112.67"
+    ];
 
     public static bool HasDuplicateHosts(string content)
     {
@@ -40,7 +41,51 @@ public static class HostsAddressRefresher
 
     public static bool IsLegacyList(string content) =>
         content.Contains("один A-адрес", StringComparison.Ordinal)
-        || SameHostUsesSeveralLegacyProxies(content);
+        || content.Contains("все A-записи", StringComparison.Ordinal);
+
+    public static HostLinesRefresh ApplyWorkingAddresses(IReadOnlyList<string> lines)
+    {
+        var hosts = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in lines)
+        {
+            var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            for (var i = 1; i < parts.Length; i++)
+            {
+                if (seen.Add(parts[i]))
+                    hosts.Add(parts[i]);
+            }
+        }
+
+        var rewritten = new List<string>(hosts.Count * WorkingAddresses.Length);
+        foreach (var host in hosts)
+        {
+            foreach (var address in WorkingAddresses)
+                rewritten.Add(address + " " + host);
+        }
+
+        return new HostLinesRefresh(rewritten, hosts.Count, 0);
+    }
+
+    public static string ApplyWorkingAddresses(string content)
+    {
+        var text = new StringBuilder();
+        text.AppendLine("### geohide.ru: hosts file");
+        text.AppendLine("# Обновлено Aeroway: рабочие адреса GeoHide на каждый домен");
+        foreach (var section in HostsListParser.ParseSections(content, "geohide", Preamble))
+        {
+            text.AppendLine();
+            if (section.Title != Preamble)
+                text.Append("# ").AppendLine(section.Title);
+            var lines = section.Title.Contains("без прокси", StringComparison.OrdinalIgnoreCase)
+                ? section.Lines
+                : ApplyWorkingAddresses(section.Lines).Lines;
+            foreach (var line in lines)
+                text.AppendLine(line);
+        }
+
+        return text.ToString().TrimEnd() + Environment.NewLine;
+    }
 
     public static Task<HostsAddressRefreshResult> RefreshAsync(string content, CancellationToken ct = default) =>
         RefreshAsync(content, ResolveAAsync, ct);
@@ -191,29 +236,6 @@ public static class HostsAddressRefresher
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
         return (chosen, resolved, kept);
-    }
-
-    private static bool SameHostUsesSeveralLegacyProxies(string content)
-    {
-        var hits = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        foreach (var section in HostsListParser.ParseSections(content, "geohide", Preamble))
-        {
-            foreach (var line in section.Lines)
-            {
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length < 2 || !LegacyProxyAddresses.Contains(parts[0]))
-                    continue;
-                for (var i = 1; i < parts.Length; i++)
-                {
-                    hits.TryGetValue(parts[i], out var count);
-                    if (count + 1 > 1)
-                        return true;
-                    hits[parts[i]] = count + 1;
-                }
-            }
-        }
-
-        return false;
     }
 
     public static string KeepExtraHosts(string refreshed, string previous)

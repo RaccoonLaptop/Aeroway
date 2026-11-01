@@ -178,18 +178,22 @@ public sealed class ProcessRunner
         return null;
     }
 
-    private static string ResolveBridgeScript()
+    private static string ResolveBridgeScript() =>
+        TryResolveBridgeScript(AppContext.BaseDirectory, ZapretPaths.DetectRoot())
+        ?? throw new FileNotFoundException("ui-bridge.ps1 not found");
+
+    internal static string? TryResolveBridgeScript(string baseDirectory, string zapretRoot)
     {
         var candidates = new[]
         {
-            Path.Combine(AppContext.BaseDirectory, "Scripts", "ui-bridge.ps1"),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Scripts", "ui-bridge.ps1"),
-            Path.Combine(AppContext.BaseDirectory, "..", "Aeroway", "Scripts", "ui-bridge.ps1"),
-            Path.Combine(AppContext.BaseDirectory, "..", "ZapretUI", "Scripts", "ui-bridge.ps1"),
-            Path.Combine(ZapretPaths.DetectRoot(), "Aeroway-Program", "Scripts", "ui-bridge.ps1"),
-            Path.Combine(ZapretPaths.DetectRoot(), "ZapretUI-Program", "Scripts", "ui-bridge.ps1"),
-            Path.Combine(ZapretPaths.DetectRoot(), "Aeroway", "Scripts", "ui-bridge.ps1"),
-            Path.Combine(ZapretPaths.DetectRoot(), "ZapretUI", "Scripts", "ui-bridge.ps1")
+            Path.Combine(baseDirectory, "Scripts", "ui-bridge.ps1"),
+            Path.Combine(baseDirectory, "..", "..", "..", "Scripts", "ui-bridge.ps1"),
+            Path.Combine(baseDirectory, "..", "Aeroway", "Scripts", "ui-bridge.ps1"),
+            Path.Combine(baseDirectory, "..", "ZapretUI", "Scripts", "ui-bridge.ps1"),
+            Path.Combine(zapretRoot, "Aeroway-Program", "Scripts", "ui-bridge.ps1"),
+            Path.Combine(zapretRoot, "ZapretUI-Program", "Scripts", "ui-bridge.ps1"),
+            Path.Combine(zapretRoot, "Aeroway", "Scripts", "ui-bridge.ps1"),
+            Path.Combine(zapretRoot, "ZapretUI", "Scripts", "ui-bridge.ps1")
         };
 
         foreach (var c in candidates)
@@ -198,7 +202,7 @@ public sealed class ProcessRunner
             if (File.Exists(full)) return full;
         }
 
-        throw new FileNotFoundException("ui-bridge.ps1 not found");
+        return null;
     }
 
     private static string ResolvePowerShellHost()

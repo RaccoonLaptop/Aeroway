@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.IO;
 using Microsoft.Win32;
 
 namespace Aeroway.Services;
@@ -13,7 +12,7 @@ public static class InstallDirMigration
 {
     public const string FolderName = "Aeroway";
     public const string LegacyFolderName = "ZapretUI";
-    private const string UninstallKey =
+    internal const string UninstallKey =
         @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{8F4E2A91-3C7D-4B6E-9F12-0A1B2C3D4E5F}_is1";
 
     public static string DataDirectory => Path.Combine(
@@ -24,16 +23,19 @@ public static class InstallDirMigration
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         LegacyFolderName);
 
-    public static bool TryRelaunchIntoAerowayFolder()
+    public static bool TryRelaunchIntoAerowayFolder() =>
+        TryRelaunchIntoAerowayFolder(MigrationEnvironment.CreateLive());
+
+    internal static bool TryRelaunchIntoAerowayFolder(MigrationEnvironment env)
     {
         try
         {
-            var current = AppContext.BaseDirectory.TrimEnd('\\', '/');
+            var current = env.BaseDirectory.TrimEnd('\\', '/');
             var leaf = Path.GetFileName(current);
             if (!leaf.Equals(LegacyFolderName, StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            var dest = DataDirectory;
+            var dest = env.DataDirectory;
             if (string.Equals(Path.GetFullPath(current), Path.GetFullPath(dest), StringComparison.OrdinalIgnoreCase))
                 return false;
 
@@ -42,20 +44,18 @@ public static class InstallDirMigration
             if (exe is null)
                 return false;
 
-            RewriteUninstallRegistry(current, dest, exe);
-            RewriteShortcuts(exe, dest);
-            RemoveLegacyShortcuts();
-
-            var start = new ProcessStartInfo
+            var key = env.Effects.OpenUninstallKey();
+            if (key is not null)
             {
-                FileName = exe,
-                WorkingDirectory = dest,
-                UseShellExecute = true
-            };
-            foreach (var arg in Environment.GetCommandLineArgs().Skip(1))
-                start.ArgumentList.Add(arg);
-            Process.Start(start);
-            ScheduleOldFolderDelete(current);
+                using (key)
+                    RewriteUninstallRegistry(key, current, dest, exe);
+            }
+
+            RewriteShortcuts(env, exe, dest);
+            RemoveLegacyShortcuts(env);
+
+            env.Effects.StartProcess(exe, dest, env.CommandLineArgs);
+            ScheduleOldFolderDelete(env, current);
             return true;
         }
         catch
@@ -64,19 +64,24 @@ public static class InstallDirMigration
         }
     }
 
-    public static void RemoveLeftoverLegacyFolder()
+    public static void RemoveLeftoverLegacyFolder() =>
+        RemoveLeftoverLegacyFolder(
+            MigrationEnvironment.CreateLive(),
+            ZapretPaths.IsValidZapretRoot(ZapretPaths.GetBundledZapretPath()));
+
+    internal static void RemoveLeftoverLegacyFolder(MigrationEnvironment env, bool bundledZapretValid)
     {
         try
         {
-            var current = AppContext.BaseDirectory.TrimEnd('\\', '/');
+            var current = env.BaseDirectory.TrimEnd('\\', '/');
             if (Path.GetFileName(current).Equals(LegacyFolderName, StringComparison.OrdinalIgnoreCase))
                 return;
-            if (!Directory.Exists(LegacyDataDirectory))
+            if (!Directory.Exists(env.LegacyDataDirectory))
                 return;
-            if (!ZapretPaths.IsValidZapretRoot(ZapretPaths.GetBundledZapretPath()))
+            if (!bundledZapretValid)
                 return;
 
-            ScheduleOldFolderDelete(LegacyDataDirectory);
+            ScheduleOldFolderDelete(env, env.LegacyDataDirectory);
         }
         catch
         {
@@ -84,17 +89,20 @@ public static class InstallDirMigration
         }
     }
 
-    public static void RemoveLegacyExeCopy()
+    public static void RemoveLegacyExeCopy() =>
+        RemoveLegacyExeCopy(MigrationEnvironment.CreateLive());
+
+    internal static void RemoveLegacyExeCopy(MigrationEnvironment env)
     {
         try
         {
-            var current = Environment.ProcessPath;
+            var current = env.ProcessPath;
             if (string.IsNullOrEmpty(current))
                 return;
             if (Path.GetFileName(current).Equals("ZapretUI.exe", StringComparison.OrdinalIgnoreCase))
                 return;
 
-            var legacy = Path.Combine(AppContext.BaseDirectory, "ZapretUI.exe");
+            var legacy = Path.Combine(env.BaseDirectory, "ZapretUI.exe");
             if (File.Exists(legacy))
                 File.Delete(legacy);
         }
@@ -135,13 +143,9 @@ public static class InstallDirMigration
             CopyTree(dir, Path.Combine(dest, Path.GetFileName(dir)));
     }
 
-    private static void RewriteUninstallRegistry(string oldDir, string newDir, string exe)
+    private static void RewriteUninstallRegistry(IUninstallRegistryKey key, string oldDir, string newDir, string exe)
     {
-        using var key = Registry.CurrentUser.OpenSubKey(UninstallKey, writable: true);
-        if (key is null)
-            return;
-
-        foreach (var name in key.GetValueNames())
+        foreach (var name in key.ValueNames.ToArray())
         {
             if (key.GetValue(name) is not string text)
                 continue;
@@ -154,12 +158,10 @@ public static class InstallDirMigration
         key.SetValue("InstallLocation", newDir + "\\");
     }
 
-    private static void RewriteShortcuts(string exe, string workDir)
+    private static void RewriteShortcuts(MigrationEnvironment env, string exe, string workDir)
     {
-        var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
-        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-        WriteShortcut(Path.Combine(programs, "Aeroway.lnk"), exe, workDir);
-        var desktopLink = Path.Combine(desktop, "Aeroway.lnk");
+        WriteShortcut(Path.Combine(env.ProgramsDirectory, "Aeroway.lnk"), exe, workDir);
+        var desktopLink = Path.Combine(env.DesktopDirectory, "Aeroway.lnk");
         if (File.Exists(desktopLink))
             WriteShortcut(desktopLink, exe, workDir);
     }
@@ -178,40 +180,32 @@ public static class InstallDirMigration
         shortcut.Save();
     }
 
-    private static void RemoveLegacyShortcuts()
+    private static void RemoveLegacyShortcuts(MigrationEnvironment env)
     {
-        var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
-        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-        TryDeleteFile(Path.Combine(programs, "Zapret UI.lnk"));
-        TryDeleteFile(Path.Combine(desktop, "Zapret UI.lnk"));
-        TryDeleteDirectory(Path.Combine(programs, "Zapret UI"));
+        TryDeleteFile(Path.Combine(env.ProgramsDirectory, "Zapret UI.lnk"));
+        TryDeleteFile(Path.Combine(env.DesktopDirectory, "Zapret UI.lnk"));
+        TryDeleteDirectory(Path.Combine(env.ProgramsDirectory, "Zapret UI"));
     }
 
-    private static void ScheduleOldFolderDelete(string oldDir)
+    private static void ScheduleOldFolderDelete(MigrationEnvironment env, string oldDir)
     {
         var full = Path.GetFullPath(oldDir).TrimEnd('\\', '/');
         if (!Path.GetFileName(full).Equals(LegacyFolderName, StringComparison.OrdinalIgnoreCase))
             return;
 
-        var currentExe = Environment.ProcessPath ?? "";
+        var currentExe = env.ProcessPath ?? "";
         var waitPid = currentExe.StartsWith(full + "\\", StringComparison.OrdinalIgnoreCase)
                       || currentExe.Equals(Path.Combine(full, "ZapretUI.exe"), StringComparison.OrdinalIgnoreCase)
                       || currentExe.Equals(Path.Combine(full, "Aeroway.exe"), StringComparison.OrdinalIgnoreCase)
-            ? Environment.ProcessId
+            ? env.ProcessId
             : 0;
 
-        var script = Path.Combine(AppContext.BaseDirectory, "Scripts", "remove-legacy-zapretui.ps1");
+        var script = Path.Combine(env.BaseDirectory, "Scripts", "remove-legacy-zapretui.ps1");
         if (!File.Exists(script))
             return;
 
-        Process.Start(new ProcessStartInfo
-        {
-            FileName = "powershell.exe",
-            Arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\" -LegacyPath \"{full}\" -WaitPid {waitPid}",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WindowStyle = ProcessWindowStyle.Hidden
-        });
+        env.Effects.StartHiddenPowerShell(
+            $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\" -LegacyPath \"{full}\" -WaitPid {waitPid}");
     }
 
     private static void TryDeleteFile(string path)
@@ -238,5 +232,98 @@ public static class InstallDirMigration
         {
             /* folder in use */
         }
+    }
+}
+
+internal sealed record MigrationEnvironment
+{
+    public required string BaseDirectory { get; init; }
+    public string? ProcessPath { get; init; }
+    public int ProcessId { get; init; }
+    public required string LocalAppData { get; init; }
+    public required string ProgramsDirectory { get; init; }
+    public required string DesktopDirectory { get; init; }
+    public IReadOnlyList<string> CommandLineArgs { get; init; } = [];
+    public required IMigrationEffects Effects { get; init; }
+
+    public string DataDirectory => Path.Combine(LocalAppData, InstallDirMigration.FolderName);
+
+    public string LegacyDataDirectory => Path.Combine(LocalAppData, InstallDirMigration.LegacyFolderName);
+
+    public static MigrationEnvironment CreateLive() => new()
+    {
+        BaseDirectory = AppContext.BaseDirectory,
+        ProcessPath = Environment.ProcessPath,
+        ProcessId = Environment.ProcessId,
+        LocalAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        ProgramsDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Programs),
+        DesktopDirectory = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+        CommandLineArgs = Environment.GetCommandLineArgs().Skip(1).ToArray(),
+        Effects = LiveMigrationEffects.Instance
+    };
+}
+
+internal interface IMigrationEffects
+{
+    IUninstallRegistryKey? OpenUninstallKey();
+    void StartProcess(string exe, string workingDirectory, IReadOnlyList<string> arguments);
+    void StartHiddenPowerShell(string arguments);
+}
+
+internal interface IUninstallRegistryKey : IDisposable
+{
+    IEnumerable<string> ValueNames { get; }
+    object? GetValue(string name);
+    void SetValue(string name, object value);
+}
+
+file sealed class LiveMigrationEffects : IMigrationEffects
+{
+    public static readonly LiveMigrationEffects Instance = new();
+
+    public IUninstallRegistryKey? OpenUninstallKey()
+    {
+        var key = Registry.CurrentUser.OpenSubKey(InstallDirMigration.UninstallKey, writable: true);
+        return key is null ? null : new RegistryUninstallKey(key);
+    }
+
+    public void StartProcess(string exe, string workingDirectory, IReadOnlyList<string> arguments)
+    {
+        var start = new ProcessStartInfo
+        {
+            FileName = exe,
+            WorkingDirectory = workingDirectory,
+            UseShellExecute = true
+        };
+        foreach (var arg in arguments)
+            start.ArgumentList.Add(arg);
+        Process.Start(start);
+    }
+
+    public void StartHiddenPowerShell(string arguments)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            Arguments = arguments,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WindowStyle = ProcessWindowStyle.Hidden
+        });
+    }
+
+    private sealed class RegistryUninstallKey : IUninstallRegistryKey
+    {
+        private readonly RegistryKey _key;
+
+        public RegistryUninstallKey(RegistryKey key) => _key = key;
+
+        public IEnumerable<string> ValueNames => _key.GetValueNames();
+
+        public object? GetValue(string name) => _key.GetValue(name);
+
+        public void SetValue(string name, object value) => _key.SetValue(name, value);
+
+        public void Dispose() => _key.Dispose();
     }
 }

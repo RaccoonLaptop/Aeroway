@@ -28,10 +28,15 @@ New-Item -ItemType Directory -Path $StagingDir -Force | Out-Null
 New-Item -ItemType Directory -Path $DistDir -Force | Out-Null
 
 Push-Location $ProjectDir
+# Skip the csproj copy of packaging/zapret into the publish folder.
+# The block below places that same tree at staging/zapret, which is what the
+# installed app runs. Copying both would ship cygwin, winws, WinDivert, and the
+# ipset backup twice inside Aeroway-Setup.exe.
 dotnet publish -c Release -r win-x64 --self-contained true `
     -p:PublishReadyToRun=true `
     -p:DebugType=None `
     -p:DebugSymbols=false `
+    -p:AerowaySkipBundledZapretCopy=true `
     -o $StagingDir
 if ($LASTEXITCODE -ne 0) { Pop-Location; exit 1 }
 Pop-Location

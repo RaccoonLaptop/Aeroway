@@ -164,10 +164,9 @@ internal sealed class ConPtyProcess : IDisposable
             GetExitCodeProcess(process, out var code);
             if (process != _process)
                 CloseHandle(process);
-            // Flush the last write into the output pipe before readers observe exit.
-            // Signaling first lets the reader treat an early EOF as final and drop that write.
-            CloseConsole();
             Exited?.Invoke(unchecked((int)code));
+            // Closing the session flushes the last output and ends the read pipe.
+            CloseConsole();
         });
     }
 

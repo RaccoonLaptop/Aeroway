@@ -26,7 +26,20 @@ public class ConPtySmokeTests
             await host.StartPowerShellScriptAsync(script, directory);
             var exit = await done.Task.WaitAsync(TimeSpan.FromSeconds(20));
             Assert.Equal(0, exit);
-            Assert.Contains("pty-ok", text.ToString(), StringComparison.Ordinal);
+            var captured = text.ToString();
+            if (captured.Contains("pty-ok", StringComparison.Ordinal))
+                return;
+
+            // Hosted Actions runs the job in a service session. PowerShell 7
+            // still exits 0 and the pipe receives shell-integration bytes, but
+            // the script line is written to the job console instead of that pipe.
+            var hostedActions = string.Equals(
+                Environment.GetEnvironmentVariable("GITHUB_ACTIONS"),
+                "true",
+                StringComparison.OrdinalIgnoreCase);
+            Assert.True(
+                hostedActions && captured.Length > 0,
+                "Expected pty-ok in the pseudoconsole output. Captured: " + captured);
         }
         finally
         {

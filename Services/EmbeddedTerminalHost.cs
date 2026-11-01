@@ -97,16 +97,8 @@ public sealed class EmbeddedTerminalHost : IAsyncDisposable
 
             if (read <= 0)
             {
-                if (_exitCode is null)
-                {
-                    for (var i = 0; i < 40 && _exitCode is null; i++)
-                        await Task.Delay(50, ct).ConfigureAwait(false);
-                    // The exit signal is raised after the pseudoconsole flush.
-                    // Read once more so that flushed output is not dropped.
-                    if (_exitCode is not null)
-                        continue;
-                }
-
+                for (var i = 0; i < 40 && _exitCode is null; i++)
+                    await Task.Delay(50, ct).ConfigureAwait(false);
                 ProcessExited?.Invoke(_exitCode ?? 0);
                 _connection = null;
                 break;

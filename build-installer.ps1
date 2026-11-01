@@ -73,12 +73,17 @@ if ($LASTEXITCODE -ne 0) { exit 1 }
 
 $setupExe = Join-Path $DistDir "Aeroway-Setup.exe"
 
-# Манифест обновлений (только Setup.exe на GitHub)
+# Манифест обновлений (только Setup.exe на GitHub).
+# AppSelfUpdateService.DefaultManifestUrl reads the repo-root file from main.
+# packaging/update.json is not loaded by the app and is not copied into the install;
+# keep that committed copy identical so the two files cannot drift.
 $manifest = @{
     version = $version
     installerUrl = "https://github.com/RaccoonLaptop/Aeroway/releases/download/v$version/Aeroway-Setup.exe"
 } | ConvertTo-Json -Depth 3
-Set-Content -Path (Join-Path $ProjectDir "update.json") -Value $manifest -Encoding UTF8
+$manifestPath = Join-Path $ProjectDir "update.json"
+Set-Content -Path $manifestPath -Value $manifest -Encoding UTF8
+Copy-Item -LiteralPath $manifestPath -Destination (Join-Path $Packaging "update.json") -Force
 
 # Do not ship update.json inside the installed app (it would shadow GitHub checks).
 $staleManifest = Join-Path $StagingDir "update.json"

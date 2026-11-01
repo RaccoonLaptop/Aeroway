@@ -1,0 +1,70 @@
+# Shared restore/build/test steps for the CI and release workflows.
+name: Restore, build, and test
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Restore, build, and test
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: |
+            ZapretUI.csproj
+            tests/ZapretUI.Tests/ZapretUI.Tests.csproj
+
+      - name: Show .NET SDK
+        shell: pwsh
+        run: dotnet --version
+
+      - name: Ensure .NET 8 Windows Desktop runtime
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $listed = & dotnet --list-runtimes
+          $listed
+          if ($listed -match 'Microsoft\.WindowsDesktop\.App 8\.') {
+            exit 0
+          }
+          $installDir = if ($env:DOTNET_ROOT) { $env:DOTNET_ROOT } else { Join-Path $env:USERPROFILE ".dotnet" }
+          $script = Join-Path $env:RUNNER_TEMP "dotnet-install.ps1"
+          Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile $script
+          & $script -Channel 8.0 -Runtime windowsdesktop -InstallDir $installDir
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & dotnet --list-runtimes
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Restore
+        shell: pwsh
+        run: |
+          dotnet restore tests/ZapretUI.Tests/ZapretUI.Tests.csproj
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build
+        shell: pwsh
+        run: |
+          dotnet build ZapretUI.csproj -c Release --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build tests/ZapretUI.Tests/ZapretUI.Tests.csproj -c Release --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Test
+        shell: pwsh
+        run: |
+          dotnet test tests/ZapretUI.Tests/ZapretUI.Tests.csproj -c Release --no-build --verbosity normal
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

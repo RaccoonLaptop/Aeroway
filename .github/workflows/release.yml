@@ -1,0 +1,135 @@
+# Tag v1.2.3 (matching ZapretUI.csproj <Version>) builds Aeroway-Setup.exe,
+# publishes it on the GitHub Release, then commits both update.json copies to main.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version-check:
+    name: Tag matches project version
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Compare tag with ZapretUI.csproj
+        id: tag
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tag = $env:GITHUB_REF_NAME.Trim()
+          if ($tag -notmatch '^v(?<ver>\d+\.\d+\.\d+)$') {
+            throw "Tag '$tag' must look like v1.2.3 and match <Version> in ZapretUI.csproj."
+          }
+          $tagVersion = $Matches['ver']
+          [xml]$csproj = Get-Content -LiteralPath "ZapretUI.csproj"
+          $projectVersion = [string]($csproj.Project.PropertyGroup.Version | Select-Object -First 1)
+          $projectVersion = $projectVersion.Trim()
+          if ($projectVersion -ne $tagVersion) {
+            throw "Tag v$tagVersion does not match ZapretUI.csproj <Version>$projectVersion</Version>. Bump <Version>, merge to main, then tag that commit."
+          }
+          Write-Host "Tag v$tagVersion matches ZapretUI.csproj."
+          [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "version=$tagVersion`n")
+
+  build-and-test:
+    name: Restore, build, and test
+    uses: ./.github/workflows/build-test.yml
+
+  installer:
+    name: Installer and GitHub Release
+    needs: [version-check, build-and-test]
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_NOLOGO: 1
+      AEROWAY_VERSION: ${{ needs.version-check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install Inno Setup 6
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          Write-Host "Installing Inno Setup 6 so build-installer.ps1 can find ISCC.exe"
+          $choco = Get-Command choco -ErrorAction SilentlyContinue
+          if (-not $choco) {
+            Write-Host "Chocolatey is not on PATH. build-installer.ps1 will try winget."
+          } else {
+            & choco install innosetup --yes --no-progress --limit-output
+            if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 3010 -and $LASTEXITCODE -ne 1641) {
+              Write-Host "choco install innosetup exited $LASTEXITCODE. build-installer.ps1 will try winget if ISCC.exe is still missing."
+            }
+          }
+          $candidates = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "${env:ProgramFiles}\Inno Setup 6\ISCC.exe",
+            (Join-Path $env:LOCALAPPDATA "Programs\Inno Setup 6\ISCC.exe")
+          )
+          $iscc = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if ($iscc) { Write-Host "ISCC: $iscc" } else { Write-Host "ISCC.exe is not installed yet." }
+
+      - name: Build installer
+        # Windows PowerShell 5.1 matches the ConvertTo-Json spacing of the committed manifests
+        # and loads System.Drawing for build-icon.ps1 / build-installer-art.ps1.
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          .\build-installer.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $setup = Join-Path (Get-Location) "dist\Aeroway-Setup.exe"
+          if (-not (Test-Path -LiteralPath $setup)) { throw "Expected installer at $setup" }
+          Write-Host "Installer: $setup ($((Get-Item -LiteralPath $setup).Length) bytes)"
+          Write-Host "---- update.json ----"
+          Get-Content -LiteralPath "update.json"
+          Write-Host "---- packaging/update.json ----"
+          Get-Content -LiteralPath "packaging\update.json"
+
+      - name: Publish GitHub Release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $tag = $env:GITHUB_REF_NAME.Trim()
+          $setup = "dist\Aeroway-Setup.exe"
+          if (-not (Test-Path -LiteralPath $setup)) { throw "Missing $setup" }
+
+          & gh release view $tag --json tagName
+          $viewExit = $LASTEXITCODE
+          if ($viewExit -eq 0) {
+            Write-Host "Release $tag already exists. Replacing Aeroway-Setup.exe and leaving the description as it is."
+            & gh release upload $tag $setup --clobber
+            if ($LASTEXITCODE -ne 0) { throw "gh release upload failed" }
+          } else {
+            Write-Host "Creating release $tag with Aeroway-Setup.exe."
+            & gh release create $tag $setup --title $tag --generate-notes
+            if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }
+          }
+
+      - name: Update update.json on main
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          .\.github\scripts\sync-update-manifests.ps1 -Version $env:AEROWAY_VERSION

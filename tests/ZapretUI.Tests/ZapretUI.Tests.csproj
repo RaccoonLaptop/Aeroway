@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
@@ -17,6 +16,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ZapretUI.csproj" />
+  </ItemGroup>
+
+  <!-- ThemeContrastTests names System.Windows.Media.Color. Reference the WPF
+       shared framework directly. UseWPF would also import System.Windows.Shapes
+       and drop the implicit System.IO using, which hides Path, File, and Directory. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
   </ItemGroup>
 
 </Project>

@@ -10,7 +10,7 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <AssemblyName>Aeroway</AssemblyName>
     <AssemblyTitle>Aeroway</AssemblyTitle>
-    <RootNamespace>ZapretUI</RootNamespace>
+    <RootNamespace>Aeroway</RootNamespace>
     <Version>2.1.17</Version>
     <Authors>Niko</Authors>
     <Company>Niko</Company>

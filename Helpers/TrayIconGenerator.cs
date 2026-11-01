@@ -12,7 +12,7 @@ using RectangleF = System.Drawing.RectangleF;
 using SolidBrush = System.Drawing.SolidBrush;
 using StringFormat = System.Drawing.StringFormat;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public static class TrayIconGenerator
 {

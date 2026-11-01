@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ZapretUI.Services;
+using Aeroway.Services;
 
-namespace ZapretUI;
+namespace Aeroway;
 
 public sealed class UpdateDownloadWindow : Window
 {

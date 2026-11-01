@@ -1,6 +1,6 @@
-using ZapretUI.Models;
+using Aeroway.Models;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public static class PresetScoreCalculator
 {

@@ -2,11 +2,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using ZapretUI.Helpers;
-using ZapretUI.Models;
-using ZapretUI.Services;
+using Aeroway.Helpers;
+using Aeroway.Models;
+using Aeroway.Services;
 
-namespace ZapretUI.Pages;
+namespace Aeroway.Pages;
 
 public partial class TestStrategiesPage : UserControl
 {

@@ -41,8 +41,9 @@ function Get-InstallerErrorMessage([int]$ExitCode) {
     }
 }
 
-function Stop-ZapretUiProcess {
+function Stop-AerowayProcess {
     Write-Log "Closing Aeroway so files can be replaced..."
+    # ZapretUI.exe is the compatibility copy shipped beside Aeroway.exe.
     Get-Process -Name 'ZapretUI','Aeroway' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     $deadline = (Get-Date).AddSeconds(15)
     while ((Get-Process -Name 'ZapretUI','Aeroway' -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
@@ -50,7 +51,7 @@ function Stop-ZapretUiProcess {
     }
 }
 
-function Start-ZapretUi {
+function Start-Aeroway {
     $launch = Join-Path $TargetDir "Aeroway.exe"
     if (-not (Test-Path -LiteralPath $launch)) {
         $launch = Join-Path $TargetDir "ZapretUI.exe"
@@ -99,7 +100,7 @@ try {
     }
 
     Stop-BypassForUpdate -LogAction { param($Message) Write-Log $Message }
-    Stop-ZapretUiProcess
+    Stop-AerowayProcess
 
     $args = @(
         "/VERYSILENT",
@@ -120,12 +121,12 @@ try {
         Remove-Item -LiteralPath $StagingDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    Start-ZapretUi
+    Start-Aeroway
     Write-Log "Installer update completed"
     exit 0
 }
 catch {
     Write-Log "ERROR: $($_.Exception.Message)"
-    Start-ZapretUi
+    Start-Aeroway
     exit 1
 }

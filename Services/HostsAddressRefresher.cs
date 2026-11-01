@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed record HostsAddressRefreshResult(string Content, int Resolved, int Kept);
 

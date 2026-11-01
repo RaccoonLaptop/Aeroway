@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public static class ZapretHealth
 {

@@ -1,7 +1,7 @@
 using System.Net.NetworkInformation;
-using ZapretUI.Controls.Backgrounds;
+using Aeroway.Controls.Backgrounds;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 /// <summary>
 /// Считает скорость сети в фоне, чтобы кадр волн не останавливался.

@@ -1,8 +1,8 @@
 using System.IO;
 using System.Text.Json;
-using ZapretUI.Models;
+using Aeroway.Models;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public static class TestRunStateStore
 {

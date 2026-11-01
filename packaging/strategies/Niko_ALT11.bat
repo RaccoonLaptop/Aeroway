@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 > nul
-:: Niko_ALT11 — авторский конфиг Niko (Zapret UI)
+:: Niko_ALT11 — авторский конфиг Niko (Aeroway)
 
 cd /d "%~dp0"
 call service.bat status_zapret

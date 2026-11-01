@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.IO;
-using ZapretUI.Helpers;
+using Aeroway.Helpers;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public static class DiscordCacheService
 {

@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ZapretUI.Helpers;
+using Aeroway.Helpers;
 
-namespace ZapretUI;
+namespace Aeroway;
 
 public sealed class UpdateInstallProgressWindow : Window
 {

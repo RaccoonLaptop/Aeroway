@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace ZapretUI.Controls.Backgrounds;
+namespace Aeroway.Controls.Backgrounds;
 
 /// <summary>
 /// Верх шкалы диаграммы. Пока скорость ниже ступени, потолок остаётся на ней.

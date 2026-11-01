@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 /// <summary>
 /// Встроенные стратегии Aeroway (копируются в папку zapret при установке/запуске).

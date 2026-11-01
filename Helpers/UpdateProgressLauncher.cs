@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.IO;
-using ZapretUI.Services;
+using Aeroway.Services;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public static class UpdateProgressLauncher
 {

@@ -3,7 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.Json;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public static class LocalizationService
 {

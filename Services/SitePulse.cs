@@ -1,6 +1,6 @@
-using ZapretUI.Controls.Backgrounds;
+using Aeroway.Controls.Backgrounds;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 /// <summary>
 /// Сообщает волнам, что обход включён.

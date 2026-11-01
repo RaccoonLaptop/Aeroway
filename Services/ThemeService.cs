@@ -2,7 +2,7 @@ using System.Windows;
 using System.Windows.Media;
 using Microsoft.Win32;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 /// <summary>
 /// Смена темы — одна замена кистей. Покадровой перекраски нет.
@@ -140,7 +140,7 @@ public static class ThemeService
         Application.Current?.Dispatcher.BeginInvoke(() =>
         {
             Apply(Windows);
-            if (Application.Current?.MainWindow is global::ZapretUI.MainWindow window)
+            if (Application.Current?.MainWindow is global::Aeroway.MainWindow window)
                 window.ReloadActivePage();
         });
     }

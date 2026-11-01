@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
-using ZapretUI.Services;
+using Aeroway.Services;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 /// <summary>
 /// Translates ui-bridge RunDiagnostics output when UI language is Russian.

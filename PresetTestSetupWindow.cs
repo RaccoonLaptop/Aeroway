@@ -2,10 +2,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using ZapretUI.Helpers;
-using ZapretUI.Models;
+using Aeroway.Helpers;
+using Aeroway.Models;
 
-namespace ZapretUI;
+namespace Aeroway;
 
 public sealed class PresetTestSetupWindow : Window
 {

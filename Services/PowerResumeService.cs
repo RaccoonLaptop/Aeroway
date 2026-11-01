@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 /// <summary>Перезапускает обход после выхода из сна, если он работал до suspend.</summary>
 public sealed class PowerResumeService : IDisposable

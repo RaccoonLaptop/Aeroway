@@ -1,8 +1,8 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
-using ZapretUI.Helpers;
+using Aeroway.Helpers;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed record HostsCatalogSnapshot(
     IReadOnlyList<HostListSection> Sections,

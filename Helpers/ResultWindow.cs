@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public sealed class ResultWindow : Window
 {

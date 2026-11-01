@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 /// <summary>
 /// Monospace family with Cyrillic. Consolas-only on Windows 11 falls back

@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.RegularExpressions;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed record HostListSection(string Id, string Title, IReadOnlyList<string> Lines);
 

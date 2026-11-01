@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 using Xunit;
-using ZapretUI.Services;
+using Aeroway.Services;
 
-namespace ZapretUI.Tests;
+namespace Aeroway.Tests;
 
 public class StrategyBatParserTests
 {
@@ -69,7 +69,7 @@ public class StrategyBatParserTests
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "ZapretUI.csproj")))
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "Aeroway.csproj")))
             dir = dir.Parent;
         Assert.NotNull(dir);
         return dir!.FullName;

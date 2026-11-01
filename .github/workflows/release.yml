@@ -1,4 +1,4 @@
-# Tag v1.2.3 (matching ZapretUI.csproj <Version>) builds Aeroway-Setup.exe,
+# Tag v1.2.3 (matching Aeroway.csproj <Version>) builds Aeroway-Setup.exe,
 # publishes it on the GitHub Release, then commits both update.json copies to main.
 name: Release
 
@@ -24,23 +24,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Compare tag with ZapretUI.csproj
+      - name: Compare tag with Aeroway.csproj
         id: tag
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
           $tag = $env:GITHUB_REF_NAME.Trim()
           if ($tag -notmatch '^v(?<ver>\d+\.\d+\.\d+)$') {
-            throw "Tag '$tag' must look like v1.2.3 and match <Version> in ZapretUI.csproj."
+            throw "Tag '$tag' must look like v1.2.3 and match <Version> in Aeroway.csproj."
           }
           $tagVersion = $Matches['ver']
-          [xml]$csproj = Get-Content -LiteralPath "ZapretUI.csproj"
+          [xml]$csproj = Get-Content -LiteralPath "Aeroway.csproj"
           $projectVersion = [string]($csproj.Project.PropertyGroup.Version | Select-Object -First 1)
           $projectVersion = $projectVersion.Trim()
           if ($projectVersion -ne $tagVersion) {
-            throw "Tag v$tagVersion does not match ZapretUI.csproj <Version>$projectVersion</Version>. Bump <Version>, merge to main, then tag that commit."
+            throw "Tag v$tagVersion does not match Aeroway.csproj <Version>$projectVersion</Version>. Bump <Version>, merge to main, then tag that commit."
           }
-          Write-Host "Tag v$tagVersion matches ZapretUI.csproj."
+          Write-Host "Tag v$tagVersion matches Aeroway.csproj."
           [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "version=$tagVersion`n")
 
   build-and-test:

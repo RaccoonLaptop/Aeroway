@@ -1,9 +1,9 @@
 using System.IO;
 using System.Windows;
-using ZapretUI;
-using ZapretUI.Helpers;
+using Aeroway;
+using Aeroway.Helpers;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class StartupUpdateService
 {

@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.RegularExpressions;
-using ZapretUI.Models;
+using Aeroway.Models;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public sealed class TestRunTracker
 {

@@ -6,7 +6,7 @@ using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 /// <summary>
 /// Renders PTY output with ANSI colors; emulates \r/\n like a real console.

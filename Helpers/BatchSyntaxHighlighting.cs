@@ -4,7 +4,7 @@ using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public static class BatchSyntaxHighlighting
 {

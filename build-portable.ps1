@@ -1,17 +1,17 @@
-# Build portable ZapretUI into ZapretUI-Program folder + update package
+# Build a portable Aeroway folder plus an update package.
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 $OutDir = Join-Path $Root "build\portable"
 $UpdateDir = Join-Path $Root "build\update"
 $Packaging = Join-Path $PSScriptRoot "packaging"
-$ZipName = "ZapretUI-Program.zip"
+$ZipName = "Aeroway-Program.zip"
 
 # Read version from csproj
-[xml]$csproj = Get-Content (Join-Path $PSScriptRoot "ZapretUI.csproj")
+[xml]$csproj = Get-Content (Join-Path $PSScriptRoot "Aeroway.csproj")
 $version = $csproj.Project.PropertyGroup.Version | Select-Object -First 1
 if (-not $version) { $version = "1.0.0" }
 
-Write-Host "Building ZapretUI v$version..." -ForegroundColor Cyan
+Write-Host "Building Aeroway v$version..." -ForegroundColor Cyan
 Push-Location $PSScriptRoot
 dotnet publish -c Release -r win-x64 --self-contained false -o $OutDir
 if ($LASTEXITCODE -ne 0) { Pop-Location; exit 1 }

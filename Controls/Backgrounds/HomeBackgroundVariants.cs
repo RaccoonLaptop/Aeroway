@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Media;
-using ZapretUI.Helpers;
-using ZapretUI.Services;
+using Aeroway.Helpers;
+using Aeroway.Services;
 
-namespace ZapretUI.Controls.Backgrounds;
+namespace Aeroway.Controls.Backgrounds;
 
 public sealed class MeteorsBackground : AnimatedBackgroundBase
 {

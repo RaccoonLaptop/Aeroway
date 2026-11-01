@@ -1,4 +1,4 @@
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 internal static class BridgeOutputFormatter
 {

@@ -3,7 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;using ICSharpCode.AvalonEdit;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public static class MouseWheelScrollHelper
 {

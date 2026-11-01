@@ -1,10 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ZapretUI.Helpers;
-using ZapretUI.Services;
+using Aeroway.Helpers;
+using Aeroway.Services;
 
-namespace ZapretUI;
+namespace Aeroway;
 
 public sealed class StrategyListsWindow : Window
 {

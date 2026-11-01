@@ -1,4 +1,4 @@
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class ConsoleLog
 {

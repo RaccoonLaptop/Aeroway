@@ -8,11 +8,11 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ZapretUI;
-using ZapretUI.Helpers;
-using ZapretUI.Services;
+using Aeroway;
+using Aeroway.Helpers;
+using Aeroway.Services;
 
-namespace ZapretUI.Pages;
+namespace Aeroway.Pages;
 
 public partial class ServicePage : UserControl
 {

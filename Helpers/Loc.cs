@@ -1,6 +1,6 @@
-using ZapretUI.Services;
+using Aeroway.Services;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public static class Loc
 {

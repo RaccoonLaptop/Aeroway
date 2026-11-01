@@ -1,10 +1,12 @@
 using System.IO.Pipes;
 using System.Windows;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class SingleInstanceService : IDisposable
 {
+    // Names stay ZapretUI so a second launch still activates a process
+    // started by an already-installed build (the 2.1.17 mutex and pipe).
 #if DEBUG
     private const string MutexName = "Global\\ZapretUI_SingleInstance-dev";
     private const string PipeName = "ZapretUI.ShowWindow-dev";

@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using ZapretUI.Models;
-using ZapretUI.Services;
+using Aeroway.Models;
+using Aeroway.Services;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public sealed class TestScriptAutoResponder
 {

@@ -83,12 +83,28 @@ public partial class TestStrategiesPage : UserControl
             Style = _primaryBtnStyle,
             HorizontalAlignment = HorizontalAlignment.Left,
             MinWidth = 180,
-            Margin = new Thickness(0, 0, 0, 16),
+            Margin = new Thickness(0, 0, 8, 8),
             Padding = new Thickness(20, 12, 20, 12)
         };
         _startBtn.Click += async (_, _) => await OnStartStopClickedAsync();
-        Grid.SetRow(_startBtn, 3);
-        root.Children.Add(_startBtn);
+        var actions = new WrapPanel { Margin = new Thickness(0, 0, 0, 8) };
+        actions.Children.Add(_startBtn);
+        if (AppBuild.IsDevBuild)
+        {
+            var pickBtn = new Button
+            {
+                Content = Loc.T("pick.open"),
+                Style = (Style)Application.Current.FindResource("SecondaryButton"),
+                MinWidth = 180,
+                Margin = new Thickness(0, 0, 8, 8),
+                Padding = new Thickness(20, 12, 20, 12),
+                ToolTip = Loc.T("pick.dev_only")
+            };
+            pickBtn.Click += (_, _) => OpenStrategyPick();
+            actions.Children.Add(pickBtn);
+        }
+        Grid.SetRow(actions, 3);
+        root.Children.Add(actions);
 
         _runPanel = new PresetTestRunPanel(_paths, _strategy, _settings)
         {
@@ -108,6 +124,19 @@ public partial class TestStrategiesPage : UserControl
     public void SaveSession() => _runPanel.SaveSession();
 
     public async Task DisposePanelAsync() => await _runPanel.DisposeTerminalAsync();
+
+    private void OpenStrategyPick()
+    {
+        if (!AppBuild.IsDevBuild)
+            return;
+        if (_runPanel.IsRunning)
+        {
+            UiHelpers.ShowInfo(Loc.T("pick.busy"), Window.GetWindow(this));
+            return;
+        }
+
+        StrategyPickWindow.TryShow(Window.GetWindow(this), _paths, _strategy, _settings);
+    }
 
     private async Task OnStartStopClickedAsync()
     {

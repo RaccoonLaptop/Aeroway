@@ -85,14 +85,17 @@ public sealed class ZapretPaths
         return savedPath ?? sibling;
     }
 
-    private static bool IsLegacyInstallPath(string? path)
+    private static bool IsLegacyInstallPath(string? path) =>
+        IsLegacyInstallPath(path, InstallDirMigration.LegacyDataDirectory);
+
+    internal static bool IsLegacyInstallPath(string? path, string legacyDataDirectory)
     {
         if (string.IsNullOrWhiteSpace(path))
             return false;
         try
         {
             var full = Path.GetFullPath(path).TrimEnd('\\', '/');
-            var legacy = InstallDirMigration.LegacyDataDirectory.TrimEnd('\\', '/');
+            var legacy = legacyDataDirectory.TrimEnd('\\', '/');
             return full.Equals(legacy, StringComparison.OrdinalIgnoreCase)
                    || full.StartsWith(legacy + "\\", StringComparison.OrdinalIgnoreCase);
         }

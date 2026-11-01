@@ -16,26 +16,37 @@ public sealed class SingleInstanceService : IDisposable
 #endif
 
     private readonly Mutex _mutex;
+    private readonly string _pipeName;
     private CancellationTokenSource? _listenCts;
 
     public bool IsFirstInstance { get; }
 
-    private SingleInstanceService(Mutex mutex, bool isFirstInstance)
+    public static string InstanceMutexName => MutexName;
+
+    public static string ActivationPipeName => PipeName;
+
+    internal event Action<string>? CommandReceived;
+
+    private SingleInstanceService(Mutex mutex, bool isFirstInstance, string pipeName)
     {
         _mutex = mutex;
         IsFirstInstance = isFirstInstance;
+        _pipeName = pipeName;
     }
 
-    public static SingleInstanceService Acquire(bool waitForRelease = false)
+    public static SingleInstanceService Acquire(bool waitForRelease = false) =>
+        Acquire(MutexName, PipeName, waitForRelease);
+
+    internal static SingleInstanceService Acquire(string mutexName, string pipeName, bool waitForRelease = false)
     {
         if (waitForRelease)
         {
             for (var attempt = 0; attempt < 50; attempt++)
             {
-                var waitMutex = new Mutex(true, MutexName, out var acquired);
+                var waitMutex = new Mutex(true, mutexName, out var acquired);
                 if (acquired)
                 {
-                    var waited = new SingleInstanceService(waitMutex, true);
+                    var waited = new SingleInstanceService(waitMutex, true, pipeName);
                     waited.StartListening();
                     return waited;
                 }
@@ -45,18 +56,20 @@ public sealed class SingleInstanceService : IDisposable
             }
         }
 
-        var mutex = new Mutex(true, MutexName, out var created);
-        var service = new SingleInstanceService(mutex, created);
+        var mutex = new Mutex(true, mutexName, out var created);
+        var service = new SingleInstanceService(mutex, created, pipeName);
         if (created)
             service.StartListening();
         return service;
     }
 
-    public static bool TryActivateExisting()
+    public static bool TryActivateExisting() => TryActivateExisting(PipeName);
+
+    internal static bool TryActivateExisting(string pipeName)
     {
         try
         {
-            using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
+            using var client = new NamedPipeClientStream(".", pipeName, PipeDirection.Out);
             client.Connect(1500);
             using var writer = new StreamWriter(client) { AutoFlush = true };
             writer.WriteLine("SHOW");
@@ -81,7 +94,7 @@ public sealed class SingleInstanceService : IDisposable
             try
             {
                 await using var server = new NamedPipeServerStream(
-                    PipeName,
+                    _pipeName,
                     PipeDirection.In,
                     1,
                     PipeTransmissionMode.Byte,
@@ -90,6 +103,7 @@ public sealed class SingleInstanceService : IDisposable
 
                 using var reader = new StreamReader(server);
                 var command = await reader.ReadLineAsync(ct).ConfigureAwait(false);
+                CommandReceived?.Invoke(command ?? "");
                 if (!string.Equals(command, "SHOW", StringComparison.OrdinalIgnoreCase))
                     continue;
 

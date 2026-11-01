@@ -7,8 +7,26 @@ namespace Aeroway.Services;
 /// </summary>
 public static class BundledZapretService
 {
+    /// <summary>
+    /// Dev and portable builds keep the engine at packaging/zapret.
+    /// The installer ships one copy at zapret/ next to the executable.
+    /// </summary>
     public static string BundledDirectory =>
-        Path.Combine(AppContext.BaseDirectory, "packaging", "zapret");
+        ResolveBundledDirectory(AppContext.BaseDirectory);
+
+    internal static string ResolveBundledDirectory(string baseDirectory)
+    {
+        var root = baseDirectory.TrimEnd('\\', '/');
+        var packaged = Path.Combine(root, "packaging", "zapret");
+        if (ZapretPaths.IsValidZapretRoot(packaged))
+            return packaged;
+
+        var installed = Path.Combine(root, "zapret");
+        if (ZapretPaths.IsValidZapretRoot(installed))
+            return installed;
+
+        return packaged;
+    }
 
     public static bool HasBundledCopy() => ZapretPaths.IsValidZapretRoot(BundledDirectory);
 
@@ -32,7 +50,10 @@ public static class BundledZapretService
         try
         {
             Directory.CreateDirectory(targetDir);
-            CopyTree(BundledDirectory, targetDir);
+            var source = Path.GetFullPath(BundledDirectory);
+            var target = Path.GetFullPath(targetDir);
+            if (!string.Equals(source, target, StringComparison.OrdinalIgnoreCase))
+                CopyTree(source, target);
 
             if (!ZapretPaths.IsValidZapretRoot(targetDir))
             {

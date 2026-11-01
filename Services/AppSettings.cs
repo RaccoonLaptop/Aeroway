@@ -38,13 +38,23 @@ public sealed class AppSettings
 
     private static void MigrateLegacySettings()
     {
-        if (File.Exists(SettingsPath))
-            return;
-        var legacy = Path.Combine(InstallDirMigration.LegacyDataDirectory, "settings.json");
-        if (!File.Exists(legacy))
-            return;
-        Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
-        File.Copy(legacy, SettingsPath, overwrite: false);
+        TryCopyLegacySettings(
+            SettingsPath,
+            Path.Combine(InstallDirMigration.LegacyDataDirectory, "settings.json"));
+    }
+
+    /// <summary>
+    /// Copies settings.json from a ZapretUI data folder when Aeroway has none yet.
+    /// </summary>
+    internal static bool TryCopyLegacySettings(string settingsPath, string legacySettingsPath)
+    {
+        if (File.Exists(settingsPath))
+            return false;
+        if (!File.Exists(legacySettingsPath))
+            return false;
+        Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
+        File.Copy(legacySettingsPath, settingsPath, overwrite: false);
+        return true;
     }
 
     public static AppSettings Load()

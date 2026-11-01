@@ -272,15 +272,18 @@ public sealed class AppSelfUpdateService
         yield return DefaultManifestUrl;
     }
 
-    private IEnumerable<string> GetLocalManifestPaths()
-    {
-        yield return Path.Combine(_installDir, "update.json");
+    private IEnumerable<string> GetLocalManifestPaths() =>
+        EnumerateLocalManifestPaths(_installDir, _zapretRoot);
 
-        if (!string.IsNullOrEmpty(_zapretRoot))
+    internal static IEnumerable<string> EnumerateLocalManifestPaths(string installDir, string? zapretRoot)
+    {
+        yield return Path.Combine(installDir, "update.json");
+
+        if (!string.IsNullOrEmpty(zapretRoot))
         {
-            yield return Path.Combine(_zapretRoot, "Aeroway-update", "update.json");
+            yield return Path.Combine(zapretRoot, "Aeroway-update", "update.json");
             // Portable trees published before the rename.
-            yield return Path.Combine(_zapretRoot, "ZapretUI-update", "update.json");
+            yield return Path.Combine(zapretRoot, "ZapretUI-update", "update.json");
         }
     }
 
@@ -422,7 +425,7 @@ public sealed class AppSelfUpdateService
         return null;
     }
 
-    private static string? FindProgramRoot(string extractDir)
+    internal static string? FindProgramRoot(string extractDir)
     {
         if (HasProgramExe(extractDir))
             return extractDir;
@@ -435,7 +438,7 @@ public sealed class AppSelfUpdateService
         return null;
     }
 
-    private static bool HasProgramExe(string directory) =>
+    internal static bool HasProgramExe(string directory) =>
         File.Exists(Path.Combine(directory, "Aeroway.exe"))
         || File.Exists(Path.Combine(directory, "ZapretUI.exe"));
 
@@ -457,27 +460,18 @@ public sealed class AppSelfUpdateService
         catch { /* updater script will retry stopping bypass */ }
     }
 
-    private static string? ResolveUpdateScript()
-    {
-        var candidates = new[]
-        {
-            Path.Combine(AppContext.BaseDirectory, "Scripts", "apply-update.ps1"),
-            Path.Combine(AppContext.BaseDirectory, "apply-update.ps1")
-        };
-        foreach (var c in candidates)
-        {
-            var full = Path.GetFullPath(c);
-            if (File.Exists(full)) return full;
-        }
-        return null;
-    }
+    private static string? ResolveUpdateScript() =>
+        ResolveScript(AppContext.BaseDirectory, "apply-update.ps1");
 
-    private static string? ResolveInstallerUpdateScript()
+    private static string? ResolveInstallerUpdateScript() =>
+        ResolveScript(AppContext.BaseDirectory, "apply-update-installer.ps1");
+
+    internal static string? ResolveScript(string baseDirectory, string fileName)
     {
         var candidates = new[]
         {
-            Path.Combine(AppContext.BaseDirectory, "Scripts", "apply-update-installer.ps1"),
-            Path.Combine(AppContext.BaseDirectory, "apply-update-installer.ps1")
+            Path.Combine(baseDirectory, "Scripts", fileName),
+            Path.Combine(baseDirectory, fileName)
         };
         foreach (var c in candidates)
         {
@@ -522,9 +516,11 @@ public sealed class AppSelfUpdateService
             keepPreparedFiles: true));
     }
 
-    private string InstalledExePath() =>
-        InstallDirMigration.FirstExistingExe(_installDir)
-        ?? Path.Combine(_installDir, "ZapretUI.exe");
+    private string InstalledExePath() => ResolveInstalledExe(_installDir);
+
+    internal static string ResolveInstalledExe(string installDir) =>
+        InstallDirMigration.FirstExistingExe(installDir)
+        ?? Path.Combine(installDir, "ZapretUI.exe");
 
     private static string GetUpdateLogPath() =>
         Path.Combine(Path.GetTempPath(), "Aeroway-update.log");

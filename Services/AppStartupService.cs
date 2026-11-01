@@ -14,10 +14,30 @@ public static class AppStartupService
 
     public static bool IsEnabled()
     {
-        if (IsTaskScheduled())
-            return true;
+        try
+        {
+            using var taskService = new TaskService();
+            return IsEnabled(new WindowsStartupStore(taskService));
+        }
+        catch
+        {
+            return IsEnabled(new WindowsStartupStore(null));
+        }
+    }
 
-        return IsLegacyRegistryEnabled();
+    internal static bool IsEnabled(IStartupStore store)
+    {
+        try
+        {
+            if (store.TaskExists(TaskName) || store.TaskExists(LegacyTaskName))
+                return true;
+        }
+        catch
+        {
+            /* task scheduler unavailable */
+        }
+
+        return HasRunValue(store);
     }
 
     public static void Enable()
@@ -25,19 +45,72 @@ public static class AppStartupService
         var exe = ResolveExecutablePath();
         if (exe is null) return;
 
-        if (TryEnableTaskScheduler(exe))
+        try
         {
-            RemoveLegacyRegistryRun();
-            return;
+            using var taskService = new TaskService();
+            Enable(new WindowsStartupStore(taskService), exe);
+        }
+        catch
+        {
+            Enable(new WindowsStartupStore(null), exe);
+        }
+    }
+
+    internal static void Enable(IStartupStore store, string exe)
+    {
+        try
+        {
+            store.DeleteTask(TaskName);
+            store.DeleteTask(LegacyTaskName);
+            if (store.TryRegisterAutostartTask(exe))
+            {
+                RemoveRunValues(store);
+                return;
+            }
+        }
+        catch
+        {
+            /* task scheduler refused the registration */
         }
 
-        EnableLegacyRegistryRun(exe);
+        store.WriteRunValue(ValueName, $"\"{exe}\" --tray");
     }
 
     public static void Disable()
     {
-        RemoveTaskScheduler();
-        RemoveLegacyRegistryRun();
+        TaskService? taskService = null;
+        try
+        {
+            taskService = new TaskService();
+        }
+        catch
+        {
+            taskService = null;
+        }
+
+        try
+        {
+            Disable(new WindowsStartupStore(taskService));
+        }
+        finally
+        {
+            taskService?.Dispose();
+        }
+    }
+
+    internal static void Disable(IStartupStore store)
+    {
+        try
+        {
+            store.DeleteTask(TaskName);
+            store.DeleteTask(LegacyTaskName);
+        }
+        catch
+        {
+            /* not registered */
+        }
+
+        RemoveRunValues(store);
     }
 
     /// <summary>Синхронизирует автозапуск UI с настройкой StartUiOnLogin.</summary>
@@ -49,21 +122,23 @@ public static class AppStartupService
             Disable();
     }
 
-    public static string? ResolveExecutablePath()
-    {
-        var path = Environment.ProcessPath;
-        if (!string.IsNullOrEmpty(path) && File.Exists(path))
-            return path;
+    public static string? ResolveExecutablePath() =>
+        ResolveExecutablePath(Environment.ProcessPath, AppContext.BaseDirectory);
 
-        return InstallDirMigration.FirstExistingExe(AppContext.BaseDirectory);
+    internal static string? ResolveExecutablePath(string? processPath, string baseDirectory)
+    {
+        if (!string.IsNullOrEmpty(processPath) && File.Exists(processPath))
+            return processPath;
+
+        return InstallDirMigration.FirstExistingExe(baseDirectory);
     }
 
-    private static bool IsTaskScheduled()
+    private static bool HasRunValue(IStartupStore store)
     {
         try
         {
-            using var taskService = new TaskService();
-            return taskService.GetTask(TaskName) is not null || taskService.GetTask(LegacyTaskName) is not null;
+            return store.ReadRunValue(ValueName) is not null
+                   || store.ReadRunValue(LegacyValueName) is not null;
         }
         catch
         {
@@ -71,50 +146,12 @@ public static class AppStartupService
         }
     }
 
-    private static bool TryEnableTaskScheduler(string exePath)
+    private static void RemoveRunValues(IStartupStore store)
     {
         try
         {
-            using var taskService = new TaskService();
-            taskService.RootFolder.DeleteTask(TaskName, false);
-            taskService.RootFolder.DeleteTask(LegacyTaskName, false);
-
-            var definition = taskService.NewTask();
-            definition.RegistrationInfo.Description =
-                "Aeroway — запуск в трее при входе в Windows.";
-            definition.Settings.DisallowStartIfOnBatteries = false;
-            definition.Settings.StopIfGoingOnBatteries = false;
-            definition.Settings.ExecutionTimeLimit = TimeSpan.Zero;
-
-            var trigger = new LogonTrigger
-            {
-                UserId = WindowsIdentity.GetCurrent().Name
-            };
-            definition.Triggers.Add(trigger);
-
-            var workDir = Path.GetDirectoryName(exePath) ?? AppContext.BaseDirectory;
-            definition.Actions.Add(new ExecAction(exePath, "--tray", workDir));
-
-            definition.Principal.RunLevel = TaskRunLevel.Highest;
-            definition.Principal.UserId = WindowsIdentity.GetCurrent().Name;
-            definition.Principal.LogonType = TaskLogonType.InteractiveToken;
-
-            taskService.RootFolder.RegisterTaskDefinition(TaskName, definition);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static void RemoveTaskScheduler()
-    {
-        try
-        {
-            using var taskService = new TaskService();
-            taskService.RootFolder.DeleteTask(TaskName, false);
-            taskService.RootFolder.DeleteTask(LegacyTaskName, false);
+            store.DeleteRunValue(ValueName);
+            store.DeleteRunValue(LegacyValueName);
         }
         catch
         {
@@ -122,36 +159,88 @@ public static class AppStartupService
         }
     }
 
-    private static bool IsLegacyRegistryEnabled()
+    private sealed class WindowsStartupStore : IStartupStore
     {
-        try
+        private readonly TaskService? _tasks;
+
+        public WindowsStartupStore(TaskService? tasks) => _tasks = tasks;
+
+        public bool TaskExists(string name)
+        {
+            if (_tasks is null)
+                return false;
+            return _tasks.GetTask(name) is not null;
+        }
+
+        public void DeleteTask(string name)
+        {
+            if (_tasks is null)
+                return;
+            _tasks.RootFolder.DeleteTask(name, false);
+        }
+
+        public bool TryRegisterAutostartTask(string exePath)
+        {
+            if (_tasks is null)
+                return false;
+
+            try
+            {
+                var definition = _tasks.NewTask();
+                definition.RegistrationInfo.Description =
+                    "Aeroway — запуск в трее при входе в Windows.";
+                definition.Settings.DisallowStartIfOnBatteries = false;
+                definition.Settings.StopIfGoingOnBatteries = false;
+                definition.Settings.ExecutionTimeLimit = TimeSpan.Zero;
+
+                var trigger = new LogonTrigger
+                {
+                    UserId = WindowsIdentity.GetCurrent().Name
+                };
+                definition.Triggers.Add(trigger);
+
+                var workDir = Path.GetDirectoryName(exePath) ?? AppContext.BaseDirectory;
+                definition.Actions.Add(new ExecAction(exePath, "--tray", workDir));
+
+                definition.Principal.RunLevel = TaskRunLevel.Highest;
+                definition.Principal.UserId = WindowsIdentity.GetCurrent().Name;
+                definition.Principal.LogonType = TaskLogonType.InteractiveToken;
+
+                _tasks.RootFolder.RegisterTaskDefinition(TaskName, definition);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public string? ReadRunValue(string name)
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, false);
-            return key?.GetValue(ValueName) is string || key?.GetValue(LegacyValueName) is string;
+            return key?.GetValue(name) as string;
         }
-        catch
+
+        public void WriteRunValue(string name, string value)
         {
-            return false;
+            using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath, true);
+            key?.SetValue(name, value);
         }
-    }
 
-    private static void EnableLegacyRegistryRun(string exePath)
-    {
-        using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath, true);
-        key?.SetValue(ValueName, $"\"{exePath}\" --tray");
-    }
-
-    private static void RemoveLegacyRegistryRun()
-    {
-        try
+        public void DeleteRunValue(string name)
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
-            key?.DeleteValue(ValueName, false);
-            key?.DeleteValue(LegacyValueName, false);
-        }
-        catch
-        {
-            /* not registered */
+            key?.DeleteValue(name, false);
         }
     }
+}
+
+internal interface IStartupStore
+{
+    bool TaskExists(string name);
+    void DeleteTask(string name);
+    bool TryRegisterAutostartTask(string exePath);
+    string? ReadRunValue(string name);
+    void WriteRunValue(string name, string value);
+    void DeleteRunValue(string name);
 }

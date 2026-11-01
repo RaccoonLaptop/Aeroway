@@ -84,10 +84,20 @@
     <None Update="packaging\strategies\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <!-- Dev and portable builds keep the engine at packaging/zapret.
+       The installer sets AerowaySkipBundledZapretCopy and copies the same tree
+       once, to {app}\zapret, so the setup does not ship the engine twice. -->
+  <ItemGroup Condition="'$(AerowaySkipBundledZapretCopy)' != 'true'">
     <None Update="packaging\zapret\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>packaging\zapret\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aeroway.Tests" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,7 +4,8 @@ param(
     [Parameter(Mandatory)][int]$ProcessId,
     [Parameter(Mandatory)][string]$ExePath,
     [string]$LogFile = "",
-    [string]$StagingDir = ""
+    [string]$StagingDir = "",
+    [switch]$ResolveLaunchOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -73,12 +74,19 @@ function Stop-AerowayProcess {
     }
 }
 
-function Start-Aeroway {
-    $launch = Join-Path $TargetDir "Aeroway.exe"
+function Resolve-AerowayLaunchExe {
+    param([Parameter(Mandatory)][string]$Dir)
+    $launch = Join-Path $Dir "Aeroway.exe"
     if (-not (Test-Path -LiteralPath $launch)) {
-        $launch = Join-Path $TargetDir "ZapretUI.exe"
+        $launch = Join-Path $Dir "ZapretUI.exe"
     }
-    if (-not (Test-Path -LiteralPath $launch)) { return }
+    if (-not (Test-Path -LiteralPath $launch)) { return $null }
+    return $launch
+}
+
+function Start-Aeroway {
+    $launch = Resolve-AerowayLaunchExe -Dir $TargetDir
+    if (-not $launch) { return }
     Write-Log "Запуск Aeroway..."
     Write-Log "Starting: $launch"
     $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -88,6 +96,13 @@ function Start-Aeroway {
     }
 
     Start-Process -FilePath $launch -WorkingDirectory $TargetDir -Verb RunAs
+}
+
+if ($ResolveLaunchOnly) {
+    $resolved = Resolve-AerowayLaunchExe -Dir $TargetDir
+    if (-not $resolved) { exit 2 }
+    Write-Output $resolved
+    exit 0
 }
 
 . (Join-Path $PSScriptRoot 'stop-bypass.ps1')

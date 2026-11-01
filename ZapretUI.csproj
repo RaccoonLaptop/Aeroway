@@ -77,6 +77,7 @@
     <None Update="Scripts\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Not shipped. The updater reads repo-root update.json; build-installer.ps1 mirrors it here. -->
     <None Update="packaging\update.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>

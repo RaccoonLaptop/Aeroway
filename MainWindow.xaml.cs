@@ -44,11 +44,10 @@ public partial class MainWindow : Window
         _settings = AppSettings.Load();
         InitializeComponent();
         SidebarHost.SizeChanged += (_, _) => RateChart.MenuInset = SidebarHost.ActualWidth;
-#if DEBUG
-        Title = "Aeroway Dev";
-#else
-        DevMark.Visibility = Visibility.Collapsed;
-#endif
+        if (AppBuild.IsDevBuild)
+            Title = "Aeroway Dev";
+        else
+            DevMark.Visibility = Visibility.Collapsed;
         ThemeService.Apply(_settings.Theme);
         ThemeService.Start();
         RestoreWindowBounds();

@@ -54,6 +54,12 @@ public partial class StrategiesPage : UserControl
         var headerBtns = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
         headerBtns.Children.Add(MakeToolbarBtn(Loc.T("strategies.open_zapret_folder"), "SecondaryButton",
             (_, _) => UiHelpers.OpenFolder(_paths.Root)));
+        if (AppBuild.IsDevBuild)
+        {
+            var pickBtn = MakeToolbarBtn(Loc.T("pick.open"), "SecondaryButton", (_, _) => OpenStrategyPick());
+            pickBtn.ToolTip = Loc.T("pick.dev_only");
+            headerBtns.Children.Add(pickBtn);
+        }
         header.Children.Add(headerBtns);
         Grid.SetRow(header, 0);
         grid.Children.Add(header);
@@ -173,6 +179,14 @@ public partial class StrategiesPage : UserControl
             _list.Items.Add(f);
         if (_list.Items.Count > 0)
             _list.SelectedIndex = 0;
+    }
+
+    private void OpenStrategyPick()
+    {
+        if (!AppBuild.IsDevBuild)
+            return;
+
+        StrategyPickWindow.TryShow(Window.GetWindow(this), _paths, _strategy, _settings);
     }
 
     private void OpenListsWindow()

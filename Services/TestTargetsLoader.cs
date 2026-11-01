@@ -10,50 +10,89 @@ public static class TestTargetsLoader
         @"^\s*(\w+)\s*=\s*""(.+)""\s*$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    public static IReadOnlyList<TestTargetDefinition> LoadDefinitions(ZapretPaths paths)
+    public static IReadOnlyList<TestTargetDefinition> LoadDefinitions(ZapretPaths paths) =>
+        LoadEndpoints(paths)
+            .Select(endpoint => new TestTargetDefinition
+            {
+                Name = endpoint.Name,
+                PingOnly = endpoint.PingOnly
+            })
+            .ToList();
+
+    public static IReadOnlyList<TestTargetEndpoint> LoadEndpoints(ZapretPaths paths)
     {
         var file = Path.Combine(paths.Utils, "targets.txt");
         if (!File.Exists(file))
-            return DefaultDefinitions();
+            return DefaultEndpoints();
 
-        var list = new List<TestTargetDefinition>();
+        var list = new List<TestTargetEndpoint>();
         foreach (var line in File.ReadAllLines(file))
         {
             if (string.IsNullOrWhiteSpace(line) || line.TrimStart().StartsWith('#'))
                 continue;
 
-            var m = TargetLine.Match(line);
-            if (!m.Success) continue;
+            var match = TargetLine.Match(line);
+            if (!match.Success)
+                continue;
 
-            var value = m.Groups[2].Value.Trim();
-            list.Add(new TestTargetDefinition
-            {
-                Name = m.Groups[1].Value.Trim(),
-                PingOnly = value.StartsWith("PING:", StringComparison.OrdinalIgnoreCase)
-            });
+            list.Add(ParseEndpoint(match.Groups[1].Value.Trim(), match.Groups[2].Value.Trim()));
         }
 
-        return list.Count > 0 ? list : DefaultDefinitions();
+        return list.Count > 0 ? list : DefaultEndpoints();
     }
 
-    private static IReadOnlyList<TestTargetDefinition> DefaultDefinitions() =>
+    internal static TestTargetEndpoint ParseEndpoint(string name, string value)
+    {
+        if (value.StartsWith("PING:", StringComparison.OrdinalIgnoreCase))
+        {
+            return new TestTargetEndpoint
+            {
+                Name = name,
+                PingHost = value["PING:".Length..].Trim()
+            };
+        }
+
+        return new TestTargetEndpoint
+        {
+            Name = name,
+            Url = value,
+            PingHost = HostOf(value)
+        };
+    }
+
+    private static string HostOf(string value)
+    {
+        if (Uri.TryCreate(value, UriKind.Absolute, out var uri) && !string.IsNullOrWhiteSpace(uri.Host))
+            return uri.Host;
+
+        var host = value;
+        var scheme = host.IndexOf("://", StringComparison.Ordinal);
+        if (scheme >= 0)
+            host = host[(scheme + 3)..];
+        var slash = host.IndexOf('/');
+        if (slash >= 0)
+            host = host[..slash];
+        return host;
+    }
+
+    private static IReadOnlyList<TestTargetEndpoint> DefaultEndpoints() =>
     [
-        new() { Name = "DiscordMain", PingOnly = false },
-        new() { Name = "DiscordGateway", PingOnly = false },
-        new() { Name = "DiscordCDN", PingOnly = false },
-        new() { Name = "DiscordUpdates", PingOnly = false },
-        new() { Name = "YouTubeWeb", PingOnly = false },
-        new() { Name = "YouTubeShort", PingOnly = false },
-        new() { Name = "YouTubeImage", PingOnly = false },
-        new() { Name = "YouTubeVideoRedirect", PingOnly = false },
-        new() { Name = "GoogleMain", PingOnly = false },
-        new() { Name = "GoogleGstatic", PingOnly = false },
-        new() { Name = "CloudflareWeb", PingOnly = false },
-        new() { Name = "CloudflareCDN", PingOnly = false },
-        new() { Name = "CloudflareDNS1111", PingOnly = true },
-        new() { Name = "CloudflareDNS1001", PingOnly = true },
-        new() { Name = "GoogleDNS8888", PingOnly = true },
-        new() { Name = "GoogleDNS8844", PingOnly = true },
-        new() { Name = "Quad9DNS9999", PingOnly = true }
+        ParseEndpoint("DiscordMain", "https://discord.com"),
+        ParseEndpoint("DiscordGateway", "https://gateway.discord.gg"),
+        ParseEndpoint("DiscordCDN", "https://cdn.discordapp.com"),
+        ParseEndpoint("DiscordUpdates", "https://updates.discord.com"),
+        ParseEndpoint("YouTubeWeb", "https://www.youtube.com"),
+        ParseEndpoint("YouTubeShort", "https://youtu.be"),
+        ParseEndpoint("YouTubeImage", "https://i.ytimg.com"),
+        ParseEndpoint("YouTubeVideoRedirect", "https://redirector.googlevideo.com"),
+        ParseEndpoint("GoogleMain", "https://www.google.com"),
+        ParseEndpoint("GoogleGstatic", "https://www.gstatic.com"),
+        ParseEndpoint("CloudflareWeb", "https://www.cloudflare.com"),
+        ParseEndpoint("CloudflareCDN", "https://cdnjs.cloudflare.com"),
+        ParseEndpoint("CloudflareDNS1111", "PING:1.1.1.1"),
+        ParseEndpoint("CloudflareDNS1001", "PING:1.0.0.1"),
+        ParseEndpoint("GoogleDNS8888", "PING:8.8.8.8"),
+        ParseEndpoint("GoogleDNS8844", "PING:8.8.4.4"),
+        ParseEndpoint("Quad9DNS9999", "PING:9.9.9.9")
     ];
 }

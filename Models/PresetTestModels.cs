@@ -38,3 +38,14 @@ public sealed class TestTargetDefinition
     public required string Name { get; init; }
     public bool PingOnly { get; init; }
 }
+
+/// <summary>
+/// Цель из targets.txt: URL для HTTP/TLS и хост для пинга, как в test zapret.ps1.
+/// </summary>
+public sealed class TestTargetEndpoint
+{
+    public required string Name { get; init; }
+    public string? Url { get; init; }
+    public string? PingHost { get; init; }
+    public bool PingOnly => string.IsNullOrWhiteSpace(Url);
+}

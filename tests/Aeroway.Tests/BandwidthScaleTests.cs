@@ -1,7 +1,7 @@
 using Xunit;
-using ZapretUI.Controls.Backgrounds;
+using Aeroway.Controls.Backgrounds;
 
-namespace ZapretUI.Tests;
+namespace Aeroway.Tests;
 
 public class BandwidthScaleTests
 {

@@ -4,7 +4,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public sealed class FindReplaceDialog : Window
 {

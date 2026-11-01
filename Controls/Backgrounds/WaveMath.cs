@@ -1,4 +1,4 @@
-namespace ZapretUI.Controls.Backgrounds;
+namespace Aeroway.Controls.Backgrounds;
 
 /// <summary>
 /// Высота гребня и нижней линии. Flow больше 1 — это уже полный канал:

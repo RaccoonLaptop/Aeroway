@@ -1,10 +1,10 @@
 using System.Drawing;
 using System.Windows;
 using System.Windows.Forms;
-using ZapretUI.Helpers;
+using Aeroway.Helpers;
 using Application = System.Windows.Application;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class TrayIconService : IDisposable
 {

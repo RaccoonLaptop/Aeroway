@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ZapretUI.Controls.Backgrounds;
+using Aeroway.Controls.Backgrounds;
 
-namespace ZapretUI.Controls;
+namespace Aeroway.Controls;
 
 public sealed class HomeBackgroundHost : Grid
 {

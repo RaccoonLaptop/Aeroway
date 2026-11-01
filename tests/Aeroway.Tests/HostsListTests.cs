@@ -1,8 +1,8 @@
 using System.Net;
-using ZapretUI.Services;
+using Aeroway.Services;
 using Xunit;
 
-namespace ZapretUI.Tests;
+namespace Aeroway.Tests;
 
 public class HostsListTests
 {
@@ -206,7 +206,7 @@ public class HostsListTests
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "ZapretUI.csproj")))
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "Aeroway.csproj")))
             dir = dir.Parent;
         Assert.NotNull(dir);
         return dir!.FullName;

@@ -1,4 +1,4 @@
-namespace ZapretUI.Models;
+namespace Aeroway.Models;
 
 public sealed class SavedTestRunSession
 {

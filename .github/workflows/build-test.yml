@@ -25,8 +25,8 @@ jobs:
           dotnet-version: 8.0.x
           cache: true
           cache-dependency-path: |
-            ZapretUI.csproj
-            tests/ZapretUI.Tests/ZapretUI.Tests.csproj
+            Aeroway.csproj
+            tests/Aeroway.Tests/Aeroway.Tests.csproj
 
       - name: Show .NET SDK
         shell: pwsh
@@ -52,19 +52,19 @@ jobs:
       - name: Restore
         shell: pwsh
         run: |
-          dotnet restore tests/ZapretUI.Tests/ZapretUI.Tests.csproj
+          dotnet restore tests/Aeroway.Tests/Aeroway.Tests.csproj
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build
         shell: pwsh
         run: |
-          dotnet build ZapretUI.csproj -c Release --no-restore
+          dotnet build Aeroway.csproj -c Release --no-restore
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet build tests/ZapretUI.Tests/ZapretUI.Tests.csproj -c Release --no-restore
+          dotnet build tests/Aeroway.Tests/Aeroway.Tests.csproj -c Release --no-restore
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Test
         shell: pwsh
         run: |
-          dotnet test tests/ZapretUI.Tests/ZapretUI.Tests.csproj -c Release --no-build --verbosity normal
+          dotnet test tests/Aeroway.Tests/Aeroway.Tests.csproj -c Release --no-build --verbosity normal
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

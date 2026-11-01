@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ZapretUI.Models;
+using Aeroway.Models;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public static class TestTargetTableRenderer
 {

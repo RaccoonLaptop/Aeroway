@@ -2,9 +2,9 @@ using System.Windows;
 using System.Windows.Input;
 using Forms = System.Windows.Forms;
 using System.Windows.Media;
-using ZapretUI.Helpers;
+using Aeroway.Helpers;
 
-namespace ZapretUI;
+namespace Aeroway;
 
 public partial class TrayMenuPopup : Window
 {

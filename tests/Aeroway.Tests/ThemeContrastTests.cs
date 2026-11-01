@@ -1,7 +1,7 @@
-using ZapretUI.Services;
+using Aeroway.Services;
 using Xunit;
 
-namespace ZapretUI.Tests;
+namespace Aeroway.Tests;
 
 public class ThemeContrastTests
 {

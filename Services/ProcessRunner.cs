@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Text;
-using ZapretUI.Helpers;
+using Aeroway.Helpers;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class ProcessRunner
 {
@@ -184,8 +184,11 @@ public sealed class ProcessRunner
         {
             Path.Combine(AppContext.BaseDirectory, "Scripts", "ui-bridge.ps1"),
             Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Scripts", "ui-bridge.ps1"),
+            Path.Combine(AppContext.BaseDirectory, "..", "Aeroway", "Scripts", "ui-bridge.ps1"),
             Path.Combine(AppContext.BaseDirectory, "..", "ZapretUI", "Scripts", "ui-bridge.ps1"),
+            Path.Combine(ZapretPaths.DetectRoot(), "Aeroway-Program", "Scripts", "ui-bridge.ps1"),
             Path.Combine(ZapretPaths.DetectRoot(), "ZapretUI-Program", "Scripts", "ui-bridge.ps1"),
+            Path.Combine(ZapretPaths.DetectRoot(), "Aeroway", "Scripts", "ui-bridge.ps1"),
             Path.Combine(ZapretPaths.DetectRoot(), "ZapretUI", "Scripts", "ui-bridge.ps1")
         };
 

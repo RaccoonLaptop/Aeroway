@@ -83,7 +83,7 @@ for ($i = 0; $i -lt 15; $i++) {
 }
 
 Get-ChildItem -LiteralPath $env:TEMP -Force -ErrorAction SilentlyContinue | Where-Object {
-    $_.Name -like 'ZapretUI-update-*' -or $_.Name -like 'ZapretUI-backup-*' -or $_.Name -eq 'ZapretUI-install-payload' -or $_.Name -eq 'ZapretUI-update.log'
+    $_.Name -like 'ZapretUI-update-*' -or $_.Name -like 'ZapretUI-backup-*' -or $_.Name -eq 'ZapretUI-install-payload' -or $_.Name -eq 'ZapretUI-update.log' -or $_.Name -like 'Aeroway-update-*' -or $_.Name -like 'Aeroway-backup-*' -or $_.Name -eq 'Aeroway-install-payload' -or $_.Name -eq 'Aeroway-update.log'
 } | ForEach-Object { Remove-TreeForce $_.FullName }
 
 if (Test-Path -LiteralPath $legacy) {

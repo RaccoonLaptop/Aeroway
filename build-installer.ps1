@@ -12,9 +12,9 @@ $ProjectDir = $PSScriptRoot
 $StagingDir = Join-Path $ProjectDir "build\staging"
 $DistDir = Join-Path $ProjectDir "dist"
 $Packaging = Join-Path $ProjectDir "packaging"
-$IssFile = Join-Path $ProjectDir "installer\ZapretUI.iss"
+$IssFile = Join-Path $ProjectDir "installer\Aeroway.iss"
 
-[xml]$csproj = Get-Content (Join-Path $ProjectDir "ZapretUI.csproj")
+[xml]$csproj = Get-Content (Join-Path $ProjectDir "Aeroway.csproj")
 $version = $csproj.Project.PropertyGroup.Version | Select-Object -First 1
 if (-not $version) { $version = "1.0.0" }
 
@@ -36,6 +36,9 @@ dotnet publish -c Release -r win-x64 --self-contained true `
 if ($LASTEXITCODE -ne 0) { Pop-Location; exit 1 }
 Pop-Location
 
+# Compatibility copy. Shortcuts and the updater from already-installed builds
+# may still launch ZapretUI.exe. InstallDirMigration removes the copy once
+# the running process is Aeroway.exe.
 Copy-Item -LiteralPath (Join-Path $StagingDir "Aeroway.exe") -Destination (Join-Path $StagingDir "ZapretUI.exe") -Force
 
 $bundledZapret = Join-Path $Packaging "zapret"

@@ -6,11 +6,11 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using ZapretUI.Controls.Backgrounds;
-using ZapretUI.Helpers;
-using ZapretUI.Services;
+using Aeroway.Controls.Backgrounds;
+using Aeroway.Helpers;
+using Aeroway.Services;
 
-namespace ZapretUI.Pages;
+namespace Aeroway.Pages;
 
 public partial class HomePage : UserControl
 {

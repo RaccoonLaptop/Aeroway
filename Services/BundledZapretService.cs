@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 /// <summary>
 /// Pre-bundled Flowseal/zapret package shipped with Aeroway (offline install fallback).

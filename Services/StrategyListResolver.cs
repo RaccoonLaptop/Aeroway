@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 /// <summary>
 /// Извлекает имена list-файлов из содержимого .bat стратегии.

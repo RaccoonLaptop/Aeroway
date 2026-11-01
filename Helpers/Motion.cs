@@ -4,7 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Microsoft.Win32;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public static class Motion
 {

@@ -1,7 +1,7 @@
 using Xunit;
-using ZapretUI.Services;
+using Aeroway.Services;
 
-namespace ZapretUI.Tests;
+namespace Aeroway.Tests;
 
 public class AppVersionCompareTests
 {

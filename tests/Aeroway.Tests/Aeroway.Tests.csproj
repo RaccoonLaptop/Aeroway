@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ZapretUI.csproj" />
+    <ProjectReference Include="..\..\Aeroway.csproj" />
   </ItemGroup>
 
   <!-- ThemeContrastTests names System.Windows.Media.Color. Reference the WPF

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 /// <summary>
 /// Переносит уже установленную копию из %LOCALAPPDATA%\ZapretUI в Aeroway.

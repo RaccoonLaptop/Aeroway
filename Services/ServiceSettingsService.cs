@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public readonly record struct GameFilterState(string Mode, string TcpRange, string UdpRange)
 {

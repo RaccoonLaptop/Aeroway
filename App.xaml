@@ -1,8 +1,8 @@
-<Application x:Class="ZapretUI.App"
+<Application x:Class="Aeroway.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-             xmlns:motion="clr-namespace:ZapretUI.Helpers"
+             xmlns:motion="clr-namespace:Aeroway.Helpers"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <!-- Dark palette (high contrast) -->

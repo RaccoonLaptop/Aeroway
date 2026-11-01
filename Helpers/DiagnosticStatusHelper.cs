@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public static class DiagnosticStatusHelper
 {

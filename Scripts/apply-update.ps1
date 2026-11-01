@@ -63,8 +63,9 @@ function Copy-Tree {
     }
 }
 
-function Stop-ZapretUiProcess {
+function Stop-AerowayProcess {
     Write-Log "Closing Aeroway so files can be replaced..."
+    # ZapretUI.exe is the compatibility copy shipped beside Aeroway.exe.
     Get-Process -Name 'ZapretUI','Aeroway' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     $deadline = (Get-Date).AddSeconds(15)
     while ((Get-Process -Name 'ZapretUI','Aeroway' -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
@@ -72,7 +73,7 @@ function Stop-ZapretUiProcess {
     }
 }
 
-function Start-ZapretUi {
+function Start-Aeroway {
     $launch = Join-Path $TargetDir "Aeroway.exe"
     if (-not (Test-Path -LiteralPath $launch)) {
         $launch = Join-Path $TargetDir "ZapretUI.exe"
@@ -108,13 +109,13 @@ try {
     }
 
     Stop-BypassForUpdate -LogAction { param($Message) Write-Log $Message }
-    Stop-ZapretUiProcess
+    Stop-AerowayProcess
 
     if (-not (Test-Path -LiteralPath $SourceDir)) {
         throw "Source folder not found: $SourceDir"
     }
 
-    $backupDir = Join-Path $env:TEMP ("ZapretUI-backup-" + [guid]::NewGuid().ToString("N"))
+    $backupDir = Join-Path $env:TEMP ("Aeroway-backup-" + [guid]::NewGuid().ToString("N"))
     Write-Log "Backup program files: $backupDir"
     New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
 
@@ -168,7 +169,7 @@ try {
         Write-Log "Remove staging: $StagingDir"
         Remove-Item -LiteralPath $StagingDir -Recurse -Force -ErrorAction SilentlyContinue
     }
-    if ($SourceDir -match 'ZapretUI-install-payload') {
+    if ($SourceDir -match 'Aeroway-install-payload|ZapretUI-install-payload') {
         $payloadRoot = Split-Path $SourceDir -Parent
         if (Test-Path -LiteralPath $payloadRoot) {
             Write-Log "Remove install payload: $payloadRoot"
@@ -176,11 +177,11 @@ try {
         }
     }
 
-    Start-ZapretUi
+    Start-Aeroway
     exit 0
 }
 catch {
     Write-Log "ERROR: $($_.Exception.Message)"
-    Start-ZapretUi
+    Start-Aeroway
     exit 1
 }

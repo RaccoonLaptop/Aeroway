@@ -2,10 +2,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ICSharpCode.AvalonEdit;
-using ZapretUI.Helpers;
-using ZapretUI.Services;
+using Aeroway.Helpers;
+using Aeroway.Services;
 
-namespace ZapretUI.Pages;
+namespace Aeroway.Pages;
 
 public partial class StrategiesPage : UserControl
 {

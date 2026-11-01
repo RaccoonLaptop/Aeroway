@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace ZapretUI.Pages;
+namespace Aeroway.Pages;
 
 public sealed class StrategyCard : INotifyPropertyChanged
 {

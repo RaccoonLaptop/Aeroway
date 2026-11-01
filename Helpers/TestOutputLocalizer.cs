@@ -1,6 +1,6 @@
-using ZapretUI.Services;
+using Aeroway.Services;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 /// <summary>
 /// Translates test zapret.ps1 console output when UI language is Russian.

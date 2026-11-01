@@ -4,9 +4,9 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ZapretUI.Helpers;
+using Aeroway.Helpers;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class AppSelfUpdateService
 {
@@ -87,7 +87,7 @@ public sealed class AppSelfUpdateService
         IProgress<DownloadProgress>? progress = null,
         CancellationToken ct = default)
     {
-        var tempRoot = Path.Combine(Path.GetTempPath(), "ZapretUI-update-" + Guid.NewGuid().ToString("N"));
+        var tempRoot = Path.Combine(Path.GetTempPath(), "Aeroway-update-" + Guid.NewGuid().ToString("N"));
 
         try
         {
@@ -159,7 +159,7 @@ public sealed class AppSelfUpdateService
 
             var installPayloadDir = Path.Combine(
                 Path.GetTempPath(),
-                "ZapretUI-install-payload",
+                "Aeroway-install-payload",
                 prepared.ManifestVersion);
             if (Directory.Exists(installPayloadDir))
                 Directory.Delete(installPayloadDir, true);
@@ -277,7 +277,11 @@ public sealed class AppSelfUpdateService
         yield return Path.Combine(_installDir, "update.json");
 
         if (!string.IsNullOrEmpty(_zapretRoot))
+        {
+            yield return Path.Combine(_zapretRoot, "Aeroway-update", "update.json");
+            // Portable trees published before the rename.
             yield return Path.Combine(_zapretRoot, "ZapretUI-update", "update.json");
+        }
     }
 
     private async Task<AppUpdateManifest?> TryLoadManifestUrlAsync(string url, CancellationToken ct)
@@ -317,7 +321,7 @@ public sealed class AppSelfUpdateService
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Get, GitHubReleasesApi);
-            req.Headers.UserAgent.ParseAdd("ZapretUI-Updater");
+            req.Headers.UserAgent.ParseAdd("Aeroway-Updater");
             req.Headers.Accept.ParseAdd("application/vnd.github+json");
             var res = await _http.SendAsync(req, ct);
             if (!res.IsSuccessStatusCode) return null;
@@ -523,7 +527,7 @@ public sealed class AppSelfUpdateService
         ?? Path.Combine(_installDir, "ZapretUI.exe");
 
     private static string GetUpdateLogPath() =>
-        Path.Combine(Path.GetTempPath(), "ZapretUI-update.log");
+        Path.Combine(Path.GetTempPath(), "Aeroway-update.log");
 
     private static void StartUpdateProgressUi(string logFile, string version)
     {

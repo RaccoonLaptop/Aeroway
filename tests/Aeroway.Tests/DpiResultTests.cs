@@ -1,9 +1,9 @@
 using System.Text;
 using Xunit;
-using ZapretUI.Helpers;
-using ZapretUI.Models;
+using Aeroway.Helpers;
+using Aeroway.Models;
 
-namespace ZapretUI.Tests;
+namespace Aeroway.Tests;
 
 public class DpiResultTests
 {

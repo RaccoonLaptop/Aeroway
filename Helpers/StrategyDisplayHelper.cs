@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public sealed class StrategyItem
 {

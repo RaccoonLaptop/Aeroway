@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public static class SystemHostsFile
 {

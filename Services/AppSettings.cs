@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class AppSettings
 {

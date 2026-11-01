@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ZapretUI.Services;
+using Aeroway.Services;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 public sealed class FakeReplacementWindow : Window
 {

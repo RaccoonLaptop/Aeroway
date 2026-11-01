@@ -1,4 +1,4 @@
-namespace ZapretUI.Controls.Backgrounds;
+namespace Aeroway.Controls.Backgrounds;
 
 public readonly struct FlowSample
 {

@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace ZapretUI.Controls.Backgrounds;
+namespace Aeroway.Controls.Backgrounds;
 
 /// <summary>
 /// Фон v1.2.6: кадровая физика. Цикл отрисовки ведёт <see cref="HomeBackgroundHost"/>.

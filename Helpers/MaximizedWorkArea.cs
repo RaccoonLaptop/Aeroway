@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 
-namespace ZapretUI.Helpers;
+namespace Aeroway.Helpers;
 
 /// <summary>
 /// У окна без системной рамки разворот занимает весь монитор, включая панель задач.

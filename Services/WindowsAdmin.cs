@@ -1,7 +1,7 @@
 using System.Security.Principal;
 using Microsoft.Win32;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public static class WindowsAdmin
 {

@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class UpdateService
 {

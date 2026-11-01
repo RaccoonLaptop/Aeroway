@@ -1,7 +1,7 @@
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class ZapretPaths
 {
@@ -77,7 +77,7 @@ public sealed class ZapretPaths
             dir = parent;
         }
 
-        // Рядом с папкой программы (ZapretUI-Program лежит внутри zapret или рядом)
+        // Рядом с папкой программы (Aeroway-Program или прежняя ZapretUI-Program)
         var sibling = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
         if (IsValidZapretRoot(sibling))
             return sibling;

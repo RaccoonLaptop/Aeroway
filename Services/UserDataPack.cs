@@ -1,6 +1,6 @@
 using System.IO.Compression;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public static class UserDataPack
 {

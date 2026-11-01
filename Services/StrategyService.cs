@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
-using ZapretUI.Helpers;
+using Aeroway.Helpers;
 
-namespace ZapretUI.Services;
+namespace Aeroway.Services;
 
 public sealed class StrategyService
 {

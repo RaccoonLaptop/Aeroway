@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 
-namespace ZapretUI.Controls.Backgrounds;
+namespace Aeroway.Controls.Backgrounds;
 
 /// <summary>
 /// Узкая диаграмма скорости внизу фона. Ширина и высота берутся из текущего окна.

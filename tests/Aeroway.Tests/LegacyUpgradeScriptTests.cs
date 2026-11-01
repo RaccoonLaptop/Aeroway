@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Xunit;
 
 namespace Aeroway.Tests;
@@ -26,12 +27,12 @@ public class LegacyUpgradeScriptTests
         File.WriteAllText(Path.Combine(target, "ZapretUI.exe"), "old");
         var legacy = RunLaunchResolve(script, firstArg, target);
         Assert.True(legacy.ExitCode == 0, legacy.Stdout + legacy.Stderr);
-        Assert.Equal(Path.Combine(target, "ZapretUI.exe"), legacy.Stdout.Trim());
+        Assert.Equal(Path.Combine(target, "ZapretUI.exe"), legacy.Stdout);
 
         File.WriteAllText(Path.Combine(target, "Aeroway.exe"), "new");
         var current = RunLaunchResolve(script, firstArg, target);
         Assert.True(current.ExitCode == 0, current.Stdout + current.Stderr);
-        Assert.Equal(Path.Combine(target, "Aeroway.exe"), current.Stdout.Trim());
+        Assert.Equal(Path.Combine(target, "Aeroway.exe"), current.Stdout);
     }
 
     [Fact]
@@ -98,14 +99,17 @@ public class LegacyUpgradeScriptTests
 
     private static ScriptResult Run(string script, params string[] args)
     {
+        // Windows PowerShell 5.1 writes this path as ASCII (or UTF-8). Reading the
+        // pipe as UTF-16 turns "C:" into U+3A43 (㩃). Capture bytes 1:1, then decode.
+        var byteEncoding = Encoding.Latin1;
         var psi = new ProcessStartInfo
         {
             FileName = "powershell.exe",
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            StandardOutputEncoding = System.Text.Encoding.Unicode,
-            StandardErrorEncoding = System.Text.Encoding.Unicode,
+            StandardOutputEncoding = byteEncoding,
+            StandardErrorEncoding = byteEncoding,
             CreateNoWindow = true
         };
         psi.ArgumentList.Add("-NoProfile");
@@ -118,10 +122,61 @@ public class LegacyUpgradeScriptTests
 
         using var process = Process.Start(psi);
         Assert.NotNull(process);
-        var stdout = process!.StandardOutput.ReadToEnd();
-        var stderr = process.StandardError.ReadToEnd();
+        var stdout = DecodePowerShellText(process!.StandardOutput.ReadToEnd(), byteEncoding);
+        var stderr = DecodePowerShellText(process.StandardError.ReadToEnd(), byteEncoding);
         Assert.True(process.WaitForExit(60000), "PowerShell did not exit: " + stderr);
         return new ScriptResult(process.ExitCode, stdout, stderr);
+    }
+
+    private static string DecodePowerShellText(string captured, Encoding byteEncoding)
+    {
+        var bytes = byteEncoding.GetBytes(captured);
+        if (bytes.Length == 0)
+            return "";
+
+        Encoding encoding;
+        var start = 0;
+        if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE)
+        {
+            encoding = Encoding.Unicode;
+            start = 2;
+        }
+        else if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF)
+        {
+            encoding = Encoding.BigEndianUnicode;
+            start = 2;
+        }
+        else if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
+        {
+            encoding = Encoding.UTF8;
+            start = 3;
+        }
+        else if (LooksLikeUtf16Le(bytes))
+        {
+            encoding = Encoding.Unicode;
+        }
+        else
+        {
+            encoding = Encoding.UTF8;
+        }
+
+        return encoding.GetString(bytes, start, bytes.Length - start).Trim().Trim('\uFEFF');
+    }
+
+    private static bool LooksLikeUtf16Le(byte[] bytes)
+    {
+        if (bytes.Length < 4 || bytes.Length % 2 != 0)
+            return false;
+
+        var zeroHighBytes = 0;
+        var pairs = bytes.Length / 2;
+        for (var i = 1; i < bytes.Length; i += 2)
+        {
+            if (bytes[i] == 0)
+                zeroHighBytes++;
+        }
+
+        return zeroHighBytes == pairs;
     }
 
     private sealed record ScriptResult(int ExitCode, string Stdout, string Stderr);

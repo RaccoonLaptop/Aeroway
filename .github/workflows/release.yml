@@ -1,5 +1,6 @@
-# Tag v1.2.3 (matching Aeroway.csproj <Version>) builds Aeroway-Setup.exe,
-# publishes it on the GitHub Release, then commits both update.json copies to main.
+# Tag v1.2.3 (matching Aeroway.csproj <Version>) builds Aeroway-Setup.exe
+# and a self-contained Debug portable archive Aeroway-Dev.zip,
+# publishes both on the GitHub Release, then commits both update.json copies to main.
 name: Release
 
 on:
@@ -48,7 +49,7 @@ jobs:
     uses: ./.github/workflows/build-test.yml
 
   installer:
-    name: Installer and GitHub Release
+    name: Installer, dev zip, and GitHub Release
     needs: [version-check, build-and-test]
     runs-on: windows-latest
     timeout-minutes: 90
@@ -106,6 +107,18 @@ jobs:
           Write-Host "---- packaging/update.json ----"
           Get-Content -LiteralPath "packaging\update.json"
 
+      - name: Build dev portable
+        # Debug defines DEBUG, so AppBuild.IsDevBuild is true and the strategy
+        # picker is available. Release Aeroway-Setup.exe is unchanged.
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          .\build-dev-portable.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $zip = Join-Path (Get-Location) "dist\Aeroway-Dev.zip"
+          if (-not (Test-Path -LiteralPath $zip)) { throw "Expected dev archive at $zip" }
+          Write-Host "Dev archive: $zip ($((Get-Item -LiteralPath $zip).Length) bytes)"
+
       - name: Publish GitHub Release
         shell: powershell
         env:
@@ -114,17 +127,19 @@ jobs:
           $ErrorActionPreference = "Stop"
           $tag = $env:GITHUB_REF_NAME.Trim()
           $setup = "dist\Aeroway-Setup.exe"
+          $devZip = "dist\Aeroway-Dev.zip"
           if (-not (Test-Path -LiteralPath $setup)) { throw "Missing $setup" }
+          if (-not (Test-Path -LiteralPath $devZip)) { throw "Missing $devZip" }
 
           & gh release view $tag --json tagName
           $viewExit = $LASTEXITCODE
           if ($viewExit -eq 0) {
-            Write-Host "Release $tag already exists. Replacing Aeroway-Setup.exe and leaving the description as it is."
-            & gh release upload $tag $setup --clobber
+            Write-Host "Release $tag already exists. Replacing Aeroway-Setup.exe and Aeroway-Dev.zip and leaving the description as it is."
+            & gh release upload $tag $setup $devZip --clobber
             if ($LASTEXITCODE -ne 0) { throw "gh release upload failed" }
           } else {
-            Write-Host "Creating release $tag with Aeroway-Setup.exe."
-            & gh release create $tag $setup --title $tag --generate-notes
+            Write-Host "Creating release $tag with Aeroway-Setup.exe and Aeroway-Dev.zip."
+            & gh release create $tag $setup $devZip --title $tag --generate-notes
             if ($LASTEXITCODE -ne 0) { throw "gh release create failed" }
           }
 

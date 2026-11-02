@@ -39,7 +39,33 @@ public class PackagingLayoutTests
         var repo = File.ReadAllText(Path.Combine(root, "update.json")).Replace("\r\n", "\n").Trim();
         var packaging = File.ReadAllText(Path.Combine(root, "packaging", "update.json")).Replace("\r\n", "\n").Trim();
         Assert.Equal(repo, packaging);
-        Assert.Contains("2.1.17", repo, StringComparison.Ordinal);
+        // The number itself moves when the release workflow points the manifests
+        // at the installer it just published. Pin the shape, not one version.
+        Assert.Matches("\"version\":\\s+\"\\d+\\.\\d+\\.\\d+\"", repo);
+        Assert.Contains(
+            "https://github.com/RaccoonLaptop/Aeroway/releases/download/v",
+            repo,
+            StringComparison.Ordinal);
+        Assert.Contains("/Aeroway-Setup.exe", repo, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Tagged_release_publishes_the_debug_portable_zip_beside_the_installer()
+    {
+        var root = TestPaths.RepoRoot();
+        var workflow = File.ReadAllText(Path.Combine(root, ".github", "workflows", "release.yml"));
+        var script = File.ReadAllText(Path.Combine(root, "build-dev-portable.ps1"));
+
+        Assert.Contains("Tag matches project version", workflow, StringComparison.Ordinal);
+        Assert.Contains("does not match Aeroway.csproj", workflow, StringComparison.Ordinal);
+        Assert.Contains("dist\\Aeroway-Setup.exe", workflow, StringComparison.Ordinal);
+        Assert.Contains("dist\\Aeroway-Dev.zip", workflow, StringComparison.Ordinal);
+        Assert.Contains("build-dev-portable.ps1", workflow, StringComparison.Ordinal);
+        Assert.Contains("-c Debug", script, StringComparison.Ordinal);
+        Assert.Contains("win-x64", script, StringComparison.Ordinal);
+        Assert.Contains("--self-contained true", script, StringComparison.Ordinal);
+        Assert.Contains("Aeroway-Dev.exe", script, StringComparison.Ordinal);
+        Assert.Contains("Aeroway-Dev.zip", script, StringComparison.Ordinal);
     }
 
     [Fact]

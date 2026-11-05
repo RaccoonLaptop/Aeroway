@@ -35,13 +35,13 @@
     <span data-lang="en">Skip to content</span>
   </a>
 
-  <header class="topbar">
+  <header class="topbar" data-assembly>
     <div class="topbar-row bar-inner">
-      <a class="brand" href="#top">
+      <a class="brand" href="#top" data-reveal>
         <img src="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png" alt="" width="36" height="36">
         Aeroway
       </a>
-      <div class="topbar-actions">
+      <div class="topbar-actions" data-reveal>
         <div class="lang-switch" role="group" data-label-ru="Язык" data-label-en="Language" aria-label="Язык">
           <button type="button" data-set-lang="ru" aria-pressed="true">RU</button>
           <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
@@ -53,19 +53,19 @@
       </div>
     </div>
     <nav class="nav-scroll bar-inner" data-label-ru="Разделы руководства" data-label-en="Guide sections" aria-label="Разделы руководства">
-      <a data-nav href="#start"><span data-lang="ru">Старт</span><span data-lang="en">Start</span></a>
-      <a data-nav href="#antivirus"><span data-lang="ru">Антивирус</span><span data-lang="en">Antivirus</span></a>
-      <a data-nav href="#sections"><span data-lang="ru">Разделы</span><span data-lang="en">Sections</span></a>
-      <a data-nav href="#tray"><span data-lang="ru">Трей</span><span data-lang="en">Tray</span></a>
-      <a data-nav href="#defaults"><span data-lang="ru">По умолчанию</span><span data-lang="en">Defaults</span></a>
-      <a data-nav href="#trouble"><span data-lang="ru">Сбои</span><span data-lang="en">Fixes</span></a>
-      <a data-nav href="#files"><span data-lang="ru">Файлы</span><span data-lang="en">Files</span></a>
+      <a data-nav data-reveal href="#start"><span data-lang="ru">Старт</span><span data-lang="en">Start</span></a>
+      <a data-nav data-reveal href="#antivirus"><span data-lang="ru">Антивирус</span><span data-lang="en">Antivirus</span></a>
+      <a data-nav data-reveal href="#sections"><span data-lang="ru">Разделы</span><span data-lang="en">Sections</span></a>
+      <a data-nav data-reveal href="#tray"><span data-lang="ru">Трей</span><span data-lang="en">Tray</span></a>
+      <a data-nav data-reveal href="#defaults"><span data-lang="ru">По умолчанию</span><span data-lang="en">Defaults</span></a>
+      <a data-nav data-reveal href="#trouble"><span data-lang="ru">Сбои</span><span data-lang="en">Fixes</span></a>
+      <a data-nav data-reveal href="#files"><span data-lang="ru">Файлы</span><span data-lang="en">Files</span></a>
     </nav>
   </header>
 
   <main class="guide" id="content">
     <div class="wrap">
-      <header class="hero">
+      <header class="hero" data-assembly>
         <div class="hero-grid">
           <div data-stagger>
             <p class="kicker" data-reveal>
@@ -77,14 +77,14 @@
               <span data-lang="ru">Графический интерфейс для zapret / Flowseal на Windows. Раньше программа называлась Zapret UI.</span>
               <span data-lang="en">Graphical interface for zapret / Flowseal on Windows. Previously called Zapret UI.</span>
             </p>
-            <div class="cta" data-reveal>
-              <a class="btn btn-gold" href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">
+            <div class="cta">
+              <a class="btn btn-gold" data-reveal href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">
                 <span data-lang="ru">Скачать Aeroway-Setup.exe</span>
                 <span data-lang="en">Download Aeroway-Setup.exe</span>
               </a>
-              <a class="btn btn-github" href="https://github.com/RaccoonLaptop/Aeroway">GitHub</a>
-              <a class="btn btn-telegram" href="https://t.me/AerowayUI">Telegram</a>
-              <a class="btn btn-ghost" href="donate.html">
+              <a class="btn btn-github" data-reveal href="https://github.com/RaccoonLaptop/Aeroway">GitHub</a>
+              <a class="btn btn-telegram" data-reveal href="https://t.me/AerowayUI">Telegram</a>
+              <a class="btn btn-ghost" data-reveal href="donate.html">
                 <span data-lang="ru">Донат</span>
                 <span data-lang="en">Donate</span>
               </a>
@@ -118,7 +118,7 @@
         </div>
       </header>
 
-      <section class="section" id="start">
+      <section class="section" data-assembly id="start">
         <div class="section-head" data-reveal>
           <p class="kicker">01</p>
           <h2><span data-lang="ru">Быстрый старт</span><span data-lang="en">Quick start</span></h2>
@@ -155,7 +155,7 @@
         </ol>
       </section>
 
-      <section class="section" id="antivirus">
+      <section class="section" data-assembly id="antivirus">
         <div class="section-head" data-reveal>
           <p class="kicker">02</p>
           <h2><span data-lang="ru">Антивирус и брандмауэр</span><span data-lang="en">Antivirus and firewall</span></h2>
@@ -222,7 +222,7 @@
         </div>
       </section>
 
-      <section class="section" id="sections">
+      <section class="section" data-assembly id="sections">
         <div class="section-head" data-reveal>
           <p class="kicker">03</p>
           <h2><span data-lang="ru">Разделы программы</span><span data-lang="en">App sections</span></h2>
@@ -247,7 +247,7 @@
         </ul>
       </section>
 
-      <section class="section" id="tray">
+      <section class="section" data-assembly id="tray">
         <div class="section-head" data-reveal>
           <p class="kicker">04</p>
           <h2><span data-lang="ru">Системный трей</span><span data-lang="en">System tray</span></h2>
@@ -265,7 +265,7 @@
         </div>
       </section>
 
-      <section class="section" id="defaults">
+      <section class="section" data-assembly id="defaults">
         <div class="section-head" data-reveal>
           <p class="kicker">05</p>
           <h2><span data-lang="ru">После установки по умолчанию</span><span data-lang="en">Fresh install defaults</span></h2>
@@ -289,7 +289,7 @@
         </ul>
       </section>
 
-      <section class="section" id="trouble">
+      <section class="section" data-assembly id="trouble">
         <div class="section-head" data-reveal>
           <p class="kicker">06</p>
           <h2><span data-lang="ru">Если не работает</span><span data-lang="en">If it does not start</span></h2>
@@ -326,7 +326,7 @@
         </ol>
       </section>
 
-      <section class="section" id="files">
+      <section class="section" data-assembly id="files">
         <div class="section-head" data-reveal>
           <p class="kicker">07</p>
           <h2><span data-lang="ru">Файлы и удаление</span><span data-lang="en">Files and removal</span></h2>

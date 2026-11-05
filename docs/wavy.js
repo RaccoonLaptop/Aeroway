@@ -31,21 +31,21 @@
       x: Math.random() * w,
       y: Math.random() * h,
       depth: depth,
-      vx: (Math.random() - 0.5) * (10 + depth * 18),
-      vy: (Math.random() - 0.5) * (8 + depth * 12),
+      vx: (Math.random() - 0.5) * (22 + depth * 36),
+      vy: (Math.random() - 0.5) * (16 + depth * 26),
       rot: Math.random() * Math.PI * 2,
-      vr: (Math.random() < 0.5 ? -1 : 1) * (0.12 + Math.random() * 0.28),
+      vr: (Math.random() < 0.5 ? -1 : 1) * (0.28 + Math.random() * 0.55),
       size: (kind === "dot" ? 8 : 12) + Math.random() * 18 * (0.45 + depth),
       kind: kind,
       color: gold ? "224, 178, 64" : "126, 182, 255",
-      alpha: (kind === "dot" ? 0.18 : 0.12) + depth * 0.32,
+      alpha: (kind === "dot" ? 0.22 : 0.16) + depth * 0.4,
       phase: Math.random() * Math.PI * 2
     };
   }
 
   function spawn() {
     particles.length = 0;
-    var count = Math.round(Math.min(34, Math.max(16, (width * height) / 42000)));
+    var count = Math.round(Math.min(46, Math.max(22, (width * height) / 28000)));
     for (var i = 0; i < count; i++) particles.push(makeParticle(width, height));
   }
 
@@ -118,7 +118,7 @@
         wrap(p);
       }
       var alpha = p.alpha;
-      if (animate) alpha *= 0.78 + 0.22 * Math.sin(t * 0.45 + p.phase);
+      if (animate) alpha *= 0.72 + 0.28 * Math.sin(t * 0.85 + p.phase);
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot);

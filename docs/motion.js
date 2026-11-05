@@ -46,17 +46,10 @@
     });
   }
 
-  function staggerDelay(el) {
-    var parent = el.parentElement;
-    if (!parent || !parent.hasAttribute("data-stagger")) return 0;
-    var index = 0;
-    for (var i = 0; i < parent.children.length; i++) {
-      var child = parent.children[i];
-      if (!child.hasAttribute("data-reveal")) continue;
-      if (child === el) return Math.min(index, 8) * 110;
-      index += 1;
-    }
-    return 0;
+  var STAGGER_MS = 170;
+
+  function assemblyRoot(el) {
+    return el.closest("[data-assembly]") || el.parentElement || el;
   }
 
   function easeOutQuart(t) {
@@ -99,12 +92,52 @@
 
   var reveals = Array.prototype.slice.call(document.querySelectorAll("[data-reveal]"));
 
+  var queue = [];
+  var queued = false;
+
+  function flushQueue() {
+    var items = queue.splice(0, queue.length);
+    queued = false;
+    var roots = [];
+    var groups = [];
+    items.forEach(function (node) {
+      var root = assemblyRoot(node);
+      var index = roots.indexOf(root);
+      if (index < 0) {
+        roots.push(root);
+        groups.push([node]);
+      } else {
+        groups[index].push(node);
+      }
+    });
+    groups.forEach(function (group) {
+      group.sort(function (a, b) {
+        if (a === b) return 0;
+        var pos = a.compareDocumentPosition(b);
+        if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+        if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+        return 0;
+      });
+      group.forEach(function (node, index) {
+        node.style.animationDelay = Math.min(index, 18) * STAGGER_MS + "ms";
+        node.classList.add("is-in");
+        startCounters(node);
+      });
+    });
+  }
+
   function show(el) {
     if (el.getAttribute("data-shown") === "1") return;
     el.setAttribute("data-shown", "1");
-    if (!reduced()) el.style.animationDelay = staggerDelay(el) + "ms";
-    el.classList.add("is-in");
-    startCounters(el);
+    if (reduced()) {
+      el.classList.add("is-in");
+      startCounters(el);
+      return;
+    }
+    queue.push(el);
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(flushQueue);
   }
 
   if (reduced() || !("IntersectionObserver" in window)) {
@@ -116,7 +149,7 @@
         show(entry.target);
         observer.unobserve(entry.target);
       });
-    }, { rootMargin: "0px 0px -12% 0px", threshold: 0 });
+    }, { rootMargin: "0px 0px -24% 0px", threshold: 0 });
     reveals.forEach(function (el) { observer.observe(el); });
   }
 

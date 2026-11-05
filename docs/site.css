@@ -491,20 +491,34 @@ pre code {
 .thanks-links a { margin: 0 8px; }
 .thanks-links a:hover { text-decoration: underline; }
 
-@keyframes rise {
-  from { opacity: 0; transform: translateY(28px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes assemble {
+  from {
+    opacity: 0;
+    transform: translateY(64px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes assemble-bar {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: none; }
 }
 
 html.js [data-reveal] {
   opacity: 0;
-  transform: translateY(28px);
 }
 
 html.js [data-reveal].is-in {
-  opacity: 1;
-  transform: translateY(0);
-  animation: rise 0.85s var(--ease-out) both;
+  animation: assemble 1.05s var(--ease-out) both;
+  transform-origin: 50% 100%;
+}
+
+html.js .nav-scroll [data-reveal].is-in {
+  animation-name: assemble-bar;
+  animation-duration: 0.7s;
 }
 
 @media (max-width: 860px) {

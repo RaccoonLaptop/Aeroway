@@ -4,46 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Спасибо — Aeroway</title>
+  <meta name="theme-color" content="#050b1b">
+  <meta name="google" content="notranslate">
   <link rel="icon" href="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png">
-  <style>
-    :root {
-      --bg: #050b1b;
-      --surface: #0d2240;
-      --border: #2a4d73;
-      --accent: #e0b240;
-      --accent-hover: #f0cc62;
-      --text: #f4e7c6;
-      --muted: #c9b896;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      font-size: 15px;
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { color: var(--accent-hover); text-decoration: underline; }
-    .wrap { max-width: 480px; margin: 0 auto; padding: 72px 20px; text-align: center; }
-    img { width: 72px; height: 72px; border-radius: 18px; margin-bottom: 16px; }
-    h1 { font-size: 1.6rem; margin: 0 0 8px; }
-    p { color: var(--muted); margin: 0 0 22px; }
-    .links a { margin: 0 8px; }
-  </style>
+  <link rel="stylesheet" href="site.css">
+  <script>
+    document.documentElement.classList.add("js");
+    window.addEventListener("load", function () {
+      window.setTimeout(function () {
+        if (!document.documentElement.classList.contains("motion-ready")) {
+          document.documentElement.classList.add("motion-fallback");
+        }
+      }, 800);
+    });
+  </script>
 </head>
 <body>
-  <div class="wrap">
-    <img src="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png" alt="Aeroway">
-    <h1>Спасибо</h1>
-    <p>Поддержка Aeroway получена.</p>
-    <div class="links">
+  <header class="topbar">
+    <div class="topbar-row bar-inner">
+      <a class="brand" href="./">
+        <img src="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png" alt="" width="36" height="36">
+        Aeroway
+      </a>
+      <a class="btn btn-ghost" href="./">К руководству</a>
+    </div>
+  </header>
+  <main class="narrow thanks" data-stagger>
+    <img class="mark" data-reveal src="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png" alt="Aeroway" width="76" height="76">
+    <h1 data-reveal>Спасибо</h1>
+    <p data-reveal>Поддержка Aeroway получена.</p>
+    <div class="thanks-links" data-reveal>
       <a href="./">К руководству</a>
       · <a href="https://github.com/RaccoonLaptop/Aeroway">GitHub</a>
       · <a href="https://t.me/AerowayUI">Telegram</a>
     </div>
-  </div>
+  </main>
   <script src="wavy.js"></script>
+  <script src="motion.js"></script>
 </body>
 </html>

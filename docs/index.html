@@ -3,376 +3,365 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Aeroway — руководство</title>
+  <title data-ru="Aeroway — руководство" data-en="Aeroway — guide">Aeroway — руководство</title>
   <meta name="description" content="Руководство пользователя Aeroway — обход блокировок Discord, YouTube и других сервисов на Windows.">
+  <meta name="theme-color" content="#050b1b">
+  <meta name="google" content="notranslate">
   <link rel="icon" href="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png">
-  <style>
-    :root {
-      --bg: #050b1b;
-      --surface: #0d2240;
-      --surface-light: #12355b;
-      --border: #2a4d73;
-      --accent: #e0b240;
-      --accent-hover: #f0cc62;
-      --success: #8fd460;
-      --error: #f07088;
-      --text: #f4e7c6;
-      --muted: #c9b896;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      font-size: 15px;
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { color: var(--accent-hover); text-decoration: underline; }
-    .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 64px; }
-    header { text-align: center; margin-bottom: 28px; }
-    .docs { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: start; }
-    .side {
-      position: sticky;
-      top: 16px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .side button {
-      appearance: none;
-      text-align: left;
-      background: transparent;
-      color: var(--text);
-      border: 0;
-      border-radius: 8px;
-      padding: 10px 12px;
-      cursor: pointer;
-      font: inherit;
-    }
-    .side button:hover { background: var(--surface-light); }
-    .side button.active { background: var(--accent); color: #050b1b; font-weight: 600; }
-    .panel { display: none; margin: 0; }
-    .panel.active { display: block; }
-    @media (max-width: 760px) {
-      .docs { grid-template-columns: 1fr; }
-      .side { position: static; }
-    }
-    header img { width: 96px; height: 96px; border-radius: 20px; margin-bottom: 12px; }
-    h1 { font-size: 2rem; margin: 0 0 8px; }
-    .tagline { color: var(--muted); margin: 0; }
-    nav.lang { margin-top: 16px; }
-    nav.lang a { margin: 0 8px; font-weight: 600; }
-    section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px 24px;
-      margin-bottom: 20px;
-    }
-    h2 { font-size: 1.25rem; margin: 0 0 12px; color: var(--accent); }
-    h3 { font-size: 1rem; margin: 16px 0 8px; }
-    ul { padding-left: 1.25rem; }
-    li { margin: 6px 0; }
-    .btn {
-      display: inline-block;
-      background: var(--accent);
-      color: #050b1b;
-      font-weight: 600;
-      padding: 12px 24px;
-      border-radius: 8px;
-      margin: 8px 8px 8px 0;
-      text-decoration: none;
-    }
-    .btn:hover { background: var(--accent-hover); color: #050b1b; text-decoration: none; }
-    .btn.secondary {
-      background: var(--surface-light);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn.telegram { background: #2AABEE; color: #fff; }
-    .btn.telegram:hover { background: #229ED9; color: #fff; }
-    .btn.github { background: #24292F; color: #fff; }
-    .btn.github:hover { background: #32383F; color: #fff; }
-    .btn.donate { background: #e0b240; color: #050b1b; }
-    .btn.donate:hover { background: #f0cc62; color: #050b1b; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-    th { color: var(--muted); font-weight: 600; }
-    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
-    .dot.ok { background: var(--success); }
-    .dot.err { background: var(--error); }
-    pre {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 14px;
-      overflow-x: auto;
-    }
-    footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 32px; }
-    #en { display: none; }
-    html.lang-en #ru { display: none; }
-    html.lang-en #en { display: block; }
-  </style>
+  <link rel="stylesheet" href="site.css">
+  <script>
+    document.documentElement.classList.add("js");
+    try {
+      if (localStorage.getItem("aeroway-docs-lang") === "en") {
+        document.documentElement.classList.add("lang-en");
+        document.documentElement.lang = "en";
+        var title = document.querySelector("title");
+        if (title && title.dataset.en) title.textContent = title.dataset.en;
+      }
+    } catch (err) { /* private mode */ }
+    window.addEventListener("load", function () {
+      window.setTimeout(function () {
+        if (!document.documentElement.classList.contains("motion-ready")) {
+          document.documentElement.classList.add("motion-fallback");
+        }
+      }, 800);
+    });
+  </script>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <img src="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png" alt="Aeroway">
-      <h1>Aeroway</h1>
-      <p class="tagline" id="ru">Графический интерфейс для zapret / Flowseal на Windows. Раньше программа называлась Zapret UI.</p>
-      <p class="tagline" id="en">Graphical interface for zapret / Flowseal on Windows. Previously called Zapret UI.</p>
-      <nav class="lang">
-        <a href="#" onclick="setLang('ru');return false;">Русский</a>
-        <a href="#" onclick="setLang('en');return false;">English</a>
-      </nav>
-      <p style="margin-top:20px">
-        <a class="btn" href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">Скачать Aeroway-Setup.exe</a>
-        <a class="btn github" href="https://github.com/RaccoonLaptop/Aeroway">GitHub</a>
-        <a class="btn telegram" href="https://t.me/AerowayUI">Telegram</a>
-        <a class="btn donate" href="donate.html">Донат</a>
-      </p>
-    </header>
+  <div id="top"></div>
+  <a class="skip" href="#content">
+    <span data-lang="ru">К содержанию</span>
+    <span data-lang="en">Skip to content</span>
+  </a>
 
-    <div class="docs">
-    <nav class="side" id="ru-nav">
-      <button type="button" data-panel="start" class="active">Быстрый старт</button>
-      <button type="button" data-panel="antivirus">Антивирус и брандмауэр</button>
-      <button type="button" data-panel="sections">Разделы программы</button>
-      <button type="button" data-panel="tray">Системный трей</button>
-      <button type="button" data-panel="defaults">После установки</button>
-      <button type="button" data-panel="trouble">Если не работает</button>
-      <button type="button" data-panel="files">Файлы и удаление</button>
+  <header class="topbar">
+    <div class="topbar-row bar-inner">
+      <a class="brand" href="#top">
+        <img src="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png" alt="" width="36" height="36">
+        Aeroway
+      </a>
+      <div class="topbar-actions">
+        <div class="lang-switch" role="group" data-label-ru="Язык" data-label-en="Language" aria-label="Язык">
+          <button type="button" data-set-lang="ru" aria-pressed="true">RU</button>
+          <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+        </div>
+        <a class="btn btn-gold" href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">
+          <span data-lang="ru">Скачать</span>
+          <span data-lang="en">Download</span>
+        </a>
+      </div>
+    </div>
+    <nav class="nav-scroll bar-inner" data-label-ru="Разделы руководства" data-label-en="Guide sections" aria-label="Разделы руководства">
+      <a data-nav href="#start"><span data-lang="ru">Старт</span><span data-lang="en">Start</span></a>
+      <a data-nav href="#antivirus"><span data-lang="ru">Антивирус</span><span data-lang="en">Antivirus</span></a>
+      <a data-nav href="#sections"><span data-lang="ru">Разделы</span><span data-lang="en">Sections</span></a>
+      <a data-nav href="#tray"><span data-lang="ru">Трей</span><span data-lang="en">Tray</span></a>
+      <a data-nav href="#defaults"><span data-lang="ru">По умолчанию</span><span data-lang="en">Defaults</span></a>
+      <a data-nav href="#trouble"><span data-lang="ru">Сбои</span><span data-lang="en">Fixes</span></a>
+      <a data-nav href="#files"><span data-lang="ru">Файлы</span><span data-lang="en">Files</span></a>
     </nav>
-    <nav class="side" id="en-nav" style="display:none">
-      <button type="button" data-panel="start" class="active">Quick start</button>
-      <button type="button" data-panel="antivirus">Antivirus and firewall</button>
-      <button type="button" data-panel="sections">App sections</button>
-      <button type="button" data-panel="tray">System tray</button>
-      <button type="button" data-panel="defaults">After installation</button>
-      <button type="button" data-panel="trouble">If it does not start</button>
-      <button type="button" data-panel="files">Files and removal</button>
-    </nav>
+  </header>
 
-    <div id="ru-content">
-      <section class="panel active" data-panel="start">
-        <h2>Быстрый старт</h2>
-        <ol>
-          <li>Скачайте и установите <strong>Aeroway-Setup.exe</strong>.</li>
-          <li>При первом запуске дождитесь загрузки компонентов Flowseal.</li>
-          <li>Добавьте папку программы в исключения антивируса и разрешите <code>Aeroway.exe</code> и <code>winws.exe</code> в брандмауэре — раздел «Антивирус и брандмауэр» слева.</li>
-          <li>На вкладке <strong>Главная</strong> выберите стратегию и нажмите <strong>ЗАПУСТИТЬ</strong>.</li>
-        </ol>
-      </section>
+  <main class="guide" id="content">
+    <div class="wrap">
+      <header class="hero">
+        <div class="hero-grid">
+          <div data-stagger>
+            <p class="kicker" data-reveal>
+              <span data-lang="ru">Интерфейс для zapret</span>
+              <span data-lang="en">Interface for zapret</span>
+            </p>
+            <h1 data-reveal>Aeroway</h1>
+            <p class="lede" data-reveal>
+              <span data-lang="ru">Графический интерфейс для zapret / Flowseal на Windows. Раньше программа называлась Zapret UI.</span>
+              <span data-lang="en">Graphical interface for zapret / Flowseal on Windows. Previously called Zapret UI.</span>
+            </p>
+            <div class="cta" data-reveal>
+              <a class="btn btn-gold" href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">
+                <span data-lang="ru">Скачать Aeroway-Setup.exe</span>
+                <span data-lang="en">Download Aeroway-Setup.exe</span>
+              </a>
+              <a class="btn btn-github" href="https://github.com/RaccoonLaptop/Aeroway">GitHub</a>
+              <a class="btn btn-telegram" href="https://t.me/AerowayUI">Telegram</a>
+              <a class="btn btn-ghost" href="donate.html">
+                <span data-lang="ru">Донат</span>
+                <span data-lang="en">Donate</span>
+              </a>
+            </div>
+          </div>
 
-      <section class="panel" data-panel="antivirus">
-        <h2>Антивирус и брандмауэр</h2>
-        <p>Исключения в антивирус и правила брандмауэра добавляются вручную. Без них Windows Defender может удалить <code>WinDivert</code> и <code>winws.exe</code>, а брандмауэр — заблокировать запуск.</p>
-        <p>После установки программа лежит в <code>%LOCALAPPDATA%\Aeroway</code> — обычно <code>C:\Users\&lt;имя&gt;\AppData\Local\Aeroway</code>. Внутри неё находится <code>zapret\bin\winws.exe</code>.</p>
-        <h3>Windows Defender</h3>
-        <ol>
-          <li>Откройте <strong>Безопасность Windows</strong>.</li>
-          <li><strong>Защита от вирусов и угроз</strong> → <strong>Управление настройками</strong>.</li>
-          <li><strong>Исключения</strong> → <strong>Добавление или удаление исключений</strong> → <strong>Добавить исключение</strong> → <strong>Папка</strong>.</li>
-          <li>Укажите <code>%LOCALAPPDATA%\Aeroway</code>.</li>
-        </ol>
-        <p>Если установлен другой антивирус, добавьте ту же папку в его исключения. Срабатывание с именем <code>WinDivert</code> или <code>Not-a-virus:RiskTool.Multi.WinDivert</code> относится к драйверу zapret: файл нужно восстановить из карантина и оставить папку в исключениях.</p>
-        <h3>Брандмауэр Windows</h3>
-        <ol>
-          <li><strong>Безопасность Windows</strong> → <strong>Брандмауэр и безопасность сети</strong> → <strong>Разрешить работу с приложением через брандмауэр</strong>.</li>
-          <li>Нажмите <strong>Изменить параметры</strong> (нужны права администратора).</li>
-          <li><strong>Разрешить другое приложение</strong> → <strong>Обзор</strong> и добавьте оба файла:
-            <ul>
-              <li><code>%LOCALAPPDATA%\Aeroway\Aeroway.exe</code></li>
-              <li><code>%LOCALAPPDATA%\Aeroway\zapret\bin\winws.exe</code></li>
-            </ul>
+          <nav class="hero-index" data-stagger data-label-ru="Содержание" data-label-en="Contents" aria-label="Содержание">
+            <a data-nav data-reveal href="#start"><span class="idx">01</span><span data-lang="ru">Быстрый старт</span><span data-lang="en">Quick start</span></a>
+            <a data-nav data-reveal href="#antivirus"><span class="idx">02</span><span data-lang="ru">Антивирус и брандмауэр</span><span data-lang="en">Antivirus and firewall</span></a>
+            <a data-nav data-reveal href="#sections"><span class="idx">03</span><span data-lang="ru">Разделы программы</span><span data-lang="en">App sections</span></a>
+            <a data-nav data-reveal href="#tray"><span class="idx">04</span><span data-lang="ru">Системный трей</span><span data-lang="en">System tray</span></a>
+            <a data-nav data-reveal href="#defaults"><span class="idx">05</span><span data-lang="ru">После установки</span><span data-lang="en">After installation</span></a>
+            <a data-nav data-reveal href="#trouble"><span class="idx">06</span><span data-lang="ru">Если не работает</span><span data-lang="en">If it does not start</span></a>
+            <a data-nav data-reveal href="#files"><span class="idx">07</span><span data-lang="ru">Файлы и удаление</span><span data-lang="en">Files and removal</span></a>
+          </nav>
+        </div>
+
+        <div class="stats" data-stagger>
+          <article class="card stat" data-reveal>
+            <p class="stat-num"><span data-count="4" aria-hidden="true">4</span><span class="visually-hidden">4</span></p>
+            <p class="stat-label"><span data-lang="ru">шага в быстром старте</span><span data-lang="en">quick-start steps</span></p>
+          </article>
+          <article class="card stat" data-reveal>
+            <p class="stat-num"><span data-count="4" aria-hidden="true">4</span><span class="visually-hidden">4</span></p>
+            <p class="stat-label"><span data-lang="ru">раздела программы</span><span data-lang="en">app sections</span></p>
+          </article>
+          <article class="card stat" data-reveal>
+            <p class="stat-num"><span data-count="2" aria-hidden="true">2</span><span class="visually-hidden">2</span></p>
+            <p class="stat-label"><span data-lang="ru">файла в брандмауэре</span><span data-lang="en">firewall programs</span></p>
+          </article>
+        </div>
+      </header>
+
+      <section class="section" id="start">
+        <div class="section-head" data-reveal>
+          <p class="kicker">01</p>
+          <h2><span data-lang="ru">Быстрый старт</span><span data-lang="en">Quick start</span></h2>
+        </div>
+        <ol class="steps" data-stagger>
+          <li class="card step" data-reveal>
+            <p class="step-no" aria-hidden="true">01</p>
+            <p>
+              <span data-lang="ru">Скачайте и установите <strong>Aeroway-Setup.exe</strong>.</span>
+              <span data-lang="en">Download and install <strong>Aeroway-Setup.exe</strong>.</span>
+            </p>
           </li>
-          <li>Для каждого файла отметьте частную и публичную сеть.</li>
+          <li class="card step" data-reveal>
+            <p class="step-no" aria-hidden="true">02</p>
+            <p>
+              <span data-lang="ru">При первом запуске дождитесь загрузки компонентов Flowseal.</span>
+              <span data-lang="en">On first launch wait for Flowseal components to download.</span>
+            </p>
+          </li>
+          <li class="card step" data-reveal>
+            <p class="step-no" aria-hidden="true">03</p>
+            <p>
+              <span data-lang="ru">Добавьте папку программы в исключения антивируса и разрешите <code>Aeroway.exe</code> и <code>winws.exe</code> в брандмауэре — раздел <a href="#antivirus">«Антивирус и брандмауэр»</a>.</span>
+              <span data-lang="en">Add the app folder to antivirus exclusions and allow <code>Aeroway.exe</code> and <code>winws.exe</code> through the firewall — see <a href="#antivirus">Antivirus and firewall</a>.</span>
+            </p>
+          </li>
+          <li class="card step" data-reveal>
+            <p class="step-no" aria-hidden="true">04</p>
+            <p>
+              <span data-lang="ru">На вкладке <strong>Главная</strong> выберите стратегию и нажмите <strong>ЗАПУСТИТЬ</strong>.</span>
+              <span data-lang="en">On <strong>Home</strong> pick a strategy and press <strong>START</strong>.</span>
+            </p>
+          </li>
         </ol>
       </section>
 
-      <section class="panel" data-panel="sections">
-        <h2>Разделы программы</h2>
-        <table>
-          <tr><th>Вкладка</th><th>Описание</th></tr>
-          <tr><td>Главная</td><td>Запуск и остановка обхода, выбор стратегии, фон</td></tr>
-          <tr><td>Стратегии</td><td>Редактор .bat, списки, копирование конфигов</td></tr>
-          <tr><td>Сервис</td><td>Game Filter, IPSet, язык, обновления</td></tr>
-          <tr><td>Консоль</td><td>Логи и диагностика</td></tr>
-        </table>
+      <section class="section" id="antivirus">
+        <div class="section-head" data-reveal>
+          <p class="kicker">02</p>
+          <h2><span data-lang="ru">Антивирус и брандмауэр</span><span data-lang="en">Antivirus and firewall</span></h2>
+          <p class="lede">
+            <span data-lang="ru">Исключения в антивирус и правила брандмауэра добавляются вручную. Без них Windows Defender может удалить <code>WinDivert</code> и <code>winws.exe</code>, а брандмауэр — заблокировать запуск.</span>
+            <span data-lang="en">Antivirus exclusions and firewall rules are added manually. Without them, Windows Defender may remove <code>WinDivert</code> and <code>winws.exe</code>, and the firewall may block startup.</span>
+          </p>
+          <p class="lede">
+            <span data-lang="ru">После установки программа лежит в <code>%LOCALAPPDATA%\Aeroway</code> — обычно <code>C:\Users\&lt;имя&gt;\AppData\Local\Aeroway</code>. Внутри неё находится <code>zapret\bin\winws.exe</code>.</span>
+            <span data-lang="en">After installation the app is in <code>%LOCALAPPDATA%\Aeroway</code> — usually <code>C:\Users\&lt;name&gt;\AppData\Local\Aeroway</code>. <code>zapret\bin\winws.exe</code> is inside that folder.</span>
+          </p>
+        </div>
+        <div class="grid-2" data-stagger>
+          <article class="card" data-reveal>
+            <h3>Windows Defender</h3>
+            <ol>
+              <li>
+                <span data-lang="ru">Откройте <strong>Безопасность Windows</strong>.</span>
+                <span data-lang="en">Open <strong>Windows Security</strong>.</span>
+              </li>
+              <li>
+                <span data-lang="ru"><strong>Защита от вирусов и угроз</strong> → <strong>Управление настройками</strong>.</span>
+                <span data-lang="en"><strong>Virus &amp; threat protection</strong> → <strong>Manage settings</strong>.</span>
+              </li>
+              <li>
+                <span data-lang="ru"><strong>Исключения</strong> → <strong>Добавление или удаление исключений</strong> → <strong>Добавить исключение</strong> → <strong>Папка</strong>.</span>
+                <span data-lang="en"><strong>Exclusions</strong> → <strong>Add or remove exclusions</strong> → <strong>Add an exclusion</strong> → <strong>Folder</strong>.</span>
+              </li>
+              <li>
+                <span data-lang="ru">Укажите <code>%LOCALAPPDATA%\Aeroway</code>.</span>
+                <span data-lang="en">Select <code>%LOCALAPPDATA%\Aeroway</code>.</span>
+              </li>
+            </ol>
+            <p>
+              <span data-lang="ru">Если установлен другой антивирус, добавьте ту же папку в его исключения. Срабатывание с именем <code>WinDivert</code> или <code>Not-a-virus:RiskTool.Multi.WinDivert</code> относится к драйверу zapret: файл нужно восстановить из карантина и оставить папку в исключениях.</span>
+              <span data-lang="en">With another antivirus, add the same folder to its exclusions. A detection named <code>WinDivert</code> or <code>Not-a-virus:RiskTool.Multi.WinDivert</code> is the zapret driver: restore the file from quarantine and keep the folder excluded.</span>
+            </p>
+          </article>
+          <article class="card" data-reveal>
+            <h3><span data-lang="ru">Брандмауэр Windows</span><span data-lang="en">Windows Firewall</span></h3>
+            <ol>
+              <li>
+                <span data-lang="ru"><strong>Безопасность Windows</strong> → <strong>Брандмауэр и безопасность сети</strong> → <strong>Разрешить работу с приложением через брандмауэр</strong>.</span>
+                <span data-lang="en"><strong>Windows Security</strong> → <strong>Firewall &amp; network protection</strong> → <strong>Allow an app through firewall</strong>.</span>
+              </li>
+              <li>
+                <span data-lang="ru">Нажмите <strong>Изменить параметры</strong> (нужны права администратора).</span>
+                <span data-lang="en">Click <strong>Change settings</strong> (administrator rights required).</span>
+              </li>
+              <li>
+                <span data-lang="ru"><strong>Разрешить другое приложение</strong> → <strong>Обзор</strong> и добавьте оба файла:</span>
+                <span data-lang="en"><strong>Allow another app</strong> → <strong>Browse</strong> and add both files:</span>
+                <ul>
+                  <li><code>%LOCALAPPDATA%\Aeroway\Aeroway.exe</code></li>
+                  <li><code>%LOCALAPPDATA%\Aeroway\zapret\bin\winws.exe</code></li>
+                </ul>
+              </li>
+              <li>
+                <span data-lang="ru">Для каждого файла отметьте частную и публичную сеть.</span>
+                <span data-lang="en">For each file, allow private and public networks.</span>
+              </li>
+            </ol>
+          </article>
+        </div>
       </section>
 
-      <section class="panel" data-panel="tray">
-        <h2>Системный трей</h2>
-        <p><span class="dot ok"></span>Зелёная иконка — обход <strong>работает</strong>.</p>
-        <p><span class="dot err"></span>Синяя иконка — <strong>остановлено</strong>.</p>
-        <p><strong>ПКМ</strong> по иконке: статус, запуск/остановка, открыть программу, выход.</p>
-      </section>
-
-      <section class="panel" data-panel="defaults">
-        <h2>После установки по умолчанию</h2>
-        <ul>
-          <li>Game Filter: <strong>TCP + UDP</strong> (порты можно изменить, например исключить RTMP: <code>1024-1934,1936-65535</code>)</li>
-          <li>IPSet: <strong>загружен</strong></li>
-          <li>Фон главной: <strong>Wavy</strong></li>
+      <section class="section" id="sections">
+        <div class="section-head" data-reveal>
+          <p class="kicker">03</p>
+          <h2><span data-lang="ru">Разделы программы</span><span data-lang="en">App sections</span></h2>
+        </div>
+        <ul class="plain-list grid-2" data-stagger>
+          <li class="card" data-reveal>
+            <h3><span data-lang="ru">Главная</span><span data-lang="en">Home</span></h3>
+            <p><span data-lang="ru">Запуск и остановка обхода, выбор стратегии, фон</span><span data-lang="en">Start/stop bypass, strategy picker, background</span></p>
+          </li>
+          <li class="card" data-reveal>
+            <h3><span data-lang="ru">Стратегии</span><span data-lang="en">Strategies</span></h3>
+            <p><span data-lang="ru">Редактор .bat, списки, копирование конфигов</span><span data-lang="en">.bat editor, lists, copy configs</span></p>
+          </li>
+          <li class="card" data-reveal>
+            <h3><span data-lang="ru">Сервис</span><span data-lang="en">Service</span></h3>
+            <p><span data-lang="ru">Game Filter, IPSet, язык, обновления</span><span data-lang="en">Game filter, IPSet, language, updates</span></p>
+          </li>
+          <li class="card" data-reveal>
+            <h3><span data-lang="ru">Консоль</span><span data-lang="en">Console</span></h3>
+            <p><span data-lang="ru">Логи и диагностика</span><span data-lang="en">Logs and diagnostics</span></p>
+          </li>
         </ul>
       </section>
 
-      <section class="panel" data-panel="trouble">
-        <h2>Если не работает</h2>
-        <ol>
-          <li><strong>Антивирус забрал <code>WinDivert</code> или <code>winws.exe</code>.</strong> Восстановите файл из карантина и исключите папку <code>%LOCALAPPDATA%\Aeroway</code>. Срабатывание <code>Not-a-virus:RiskTool.Multi.WinDivert</code> относится к драйверу zapret.</li>
-          <li><strong>Брандмауэр молча блокирует запуск.</strong> Разрешите <code>Aeroway.exe</code> и <code>zapret\bin\winws.exe</code> для частной и публичной сети.</li>
-          <li><strong>Сайты всё ещё не открываются.</strong> Смените стратегию или обновите Flowseal в разделе «Сервис».</li>
-          <li><strong>Окно не открывается.</strong> Поставьте последнюю версию со <a href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">страницы релизов</a>.</li>
-        </ol>
+      <section class="section" id="tray">
+        <div class="section-head" data-reveal>
+          <p class="kicker">04</p>
+          <h2><span data-lang="ru">Системный трей</span><span data-lang="en">System tray</span></h2>
+        </div>
+        <div class="grid-2" data-stagger>
+          <article class="card" data-reveal>
+            <p><span class="dot dot-ok" aria-hidden="true"></span><span data-lang="ru">Зелёная иконка — обход <strong>работает</strong>.</span><span data-lang="en">Green icon — bypass <strong>running</strong>.</span></p>
+          </article>
+          <article class="card" data-reveal>
+            <p><span class="dot dot-stop" aria-hidden="true"></span><span data-lang="ru">Синяя иконка — <strong>остановлено</strong>.</span><span data-lang="en">Blue icon — <strong>stopped</strong>.</span></p>
+          </article>
+          <article class="card span-all" data-reveal>
+            <p><span data-lang="ru"><strong>ПКМ</strong> по иконке: статус, запуск/остановка, открыть программу, выход.</span><span data-lang="en"><strong>Right-click</strong>: status, start/stop, open app, exit.</span></p>
+          </article>
+        </div>
       </section>
 
-      <section class="panel" data-panel="files">
-        <h2>Файлы и удаление</h2>
-        <p>После установки программа лежит в <code>%LOCALAPPDATA%\Aeroway</code>. Обычно это <code>C:\Users\&lt;имя&gt;\AppData\Local\Aeroway</code>. Движок — в <code>zapret\bin\winws.exe</code>.</p>
-        <p>Удаление — через «Приложения и возможности», имя <strong>Aeroway</strong>. Ярлык и иконка тоже от Aeroway.</p>
-        <p>Если при удалении папки Windows пишет, что занят <code>WinDivert64.sys</code>, драйвер ещё загружен. Остановите обход, затем в PowerShell от администратора:</p>
-        <pre><code>sc.exe stop WinDivert
-sc.exe delete WinDivert</code></pre>
-        <p>В PowerShell нужна именно команда <code>sc.exe</code>. После этого файл отпускает папку.</p>
-      </section>
-
-    </div>
-
-    <div id="en-content" style="display:none">
-      <section class="panel active" data-panel="start">
-        <h2>Quick start</h2>
-        <ol>
-          <li>Download and install <strong>Aeroway-Setup.exe</strong>.</li>
-          <li>On first launch wait for Flowseal components to download.</li>
-          <li>Add the app folder to antivirus exclusions and allow <code>Aeroway.exe</code> and <code>winws.exe</code> through the firewall — see “Antivirus and firewall” in the menu.</li>
-          <li>On <strong>Home</strong> pick a strategy and press <strong>START</strong>.</li>
-        </ol>
-      </section>
-
-      <section class="panel" data-panel="antivirus">
-        <h2>Antivirus and firewall</h2>
-        <p>Antivirus exclusions and firewall rules are added manually. Without them, Windows Defender may remove <code>WinDivert</code> and <code>winws.exe</code>, and the firewall may block startup.</p>
-        <p>After installation the app is in <code>%LOCALAPPDATA%\Aeroway</code> — usually <code>C:\Users\&lt;name&gt;\AppData\Local\Aeroway</code>. <code>zapret\bin\winws.exe</code> is inside that folder.</p>
-        <h3>Windows Defender</h3>
-        <ol>
-          <li>Open <strong>Windows Security</strong>.</li>
-          <li><strong>Virus &amp; threat protection</strong> → <strong>Manage settings</strong>.</li>
-          <li><strong>Exclusions</strong> → <strong>Add or remove exclusions</strong> → <strong>Add an exclusion</strong> → <strong>Folder</strong>.</li>
-          <li>Select <code>%LOCALAPPDATA%\Aeroway</code>.</li>
-        </ol>
-        <p>With another antivirus, add the same folder to its exclusions. A detection named <code>WinDivert</code> or <code>Not-a-virus:RiskTool.Multi.WinDivert</code> is the zapret driver: restore the file from quarantine and keep the folder excluded.</p>
-        <h3>Windows Firewall</h3>
-        <ol>
-          <li><strong>Windows Security</strong> → <strong>Firewall &amp; network protection</strong> → <strong>Allow an app through firewall</strong>.</li>
-          <li>Click <strong>Change settings</strong> (administrator rights required).</li>
-          <li><strong>Allow another app</strong> → <strong>Browse</strong> and add both files:
-            <ul>
-              <li><code>%LOCALAPPDATA%\Aeroway\Aeroway.exe</code></li>
-              <li><code>%LOCALAPPDATA%\Aeroway\zapret\bin\winws.exe</code></li>
-            </ul>
+      <section class="section" id="defaults">
+        <div class="section-head" data-reveal>
+          <p class="kicker">05</p>
+          <h2><span data-lang="ru">После установки по умолчанию</span><span data-lang="en">Fresh install defaults</span></h2>
+        </div>
+        <ul class="plain-list grid-3" data-stagger>
+          <li class="card" data-reveal>
+            <h3>Game Filter</h3>
+            <p>
+              <span data-lang="ru"><strong>TCP + UDP</strong> (порты можно изменить, например исключить RTMP: <code>1024-1934,1936-65535</code>)</span>
+              <span data-lang="en"><strong>TCP + UDP</strong> (ports can be customized, e.g. exclude RTMP: <code>1024-1934,1936-65535</code>)</span>
+            </p>
           </li>
-          <li>For each file, allow private and public networks.</li>
-        </ol>
-      </section>
-
-      <section class="panel" data-panel="sections">
-        <h2>App sections</h2>
-        <table>
-          <tr><th>Tab</th><th>Description</th></tr>
-          <tr><td>Home</td><td>Start/stop bypass, strategy picker, background</td></tr>
-          <tr><td>Strategies</td><td>.bat editor, lists, copy configs</td></tr>
-          <tr><td>Service</td><td>Game filter, IPSet, language, updates</td></tr>
-          <tr><td>Console</td><td>Logs and diagnostics</td></tr>
-        </table>
-      </section>
-
-      <section class="panel" data-panel="tray">
-        <h2>System tray</h2>
-        <p><span class="dot ok"></span>Green icon — bypass <strong>running</strong>.</p>
-        <p><span class="dot err"></span>Blue icon — <strong>stopped</strong>.</p>
-        <p><strong>Right-click</strong>: status, start/stop, open app, exit.</p>
-      </section>
-
-      <section class="panel" data-panel="defaults">
-        <h2>Fresh install defaults</h2>
-        <ul>
-          <li>Game Filter: <strong>TCP + UDP</strong> (ports can be customized, e.g. exclude RTMP: <code>1024-1934,1936-65535</code>)</li>
-          <li>IPSet: <strong>loaded</strong></li>
-          <li>Home background: <strong>Wavy</strong></li>
+          <li class="card" data-reveal>
+            <h3>IPSet</h3>
+            <p><span data-lang="ru"><strong>загружен</strong></span><span data-lang="en"><strong>loaded</strong></span></p>
+          </li>
+          <li class="card" data-reveal>
+            <h3><span data-lang="ru">Фон главной</span><span data-lang="en">Home background</span></h3>
+            <p><strong>Wavy</strong></p>
+          </li>
         </ul>
       </section>
 
-      <section class="panel" data-panel="trouble">
-        <h2>If it does not start</h2>
-        <ol>
-          <li><strong>Antivirus removed <code>WinDivert</code> or <code>winws.exe</code>.</strong> Restore the file from quarantine and exclude <code>%LOCALAPPDATA%\Aeroway</code>. A detection named <code>Not-a-virus:RiskTool.Multi.WinDivert</code> is the zapret driver.</li>
-          <li><strong>The firewall blocks startup quietly.</strong> Allow <code>Aeroway.exe</code> and <code>zapret\bin\winws.exe</code> on private and public networks.</li>
-          <li><strong>Sites still do not open.</strong> Change the strategy or update Flowseal in Service.</li>
-          <li><strong>The window does not open.</strong> Install the latest build from the <a href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">releases page</a>.</li>
+      <section class="section" id="trouble">
+        <div class="section-head" data-reveal>
+          <p class="kicker">06</p>
+          <h2><span data-lang="ru">Если не работает</span><span data-lang="en">If it does not start</span></h2>
+        </div>
+        <ol class="steps" data-stagger>
+          <li class="card step" data-reveal>
+            <p class="step-no" aria-hidden="true">01</p>
+            <p>
+              <span data-lang="ru"><strong>Антивирус забрал <code>WinDivert</code> или <code>winws.exe</code>.</strong> Восстановите файл из карантина и исключите папку <code>%LOCALAPPDATA%\Aeroway</code>. Срабатывание <code>Not-a-virus:RiskTool.Multi.WinDivert</code> относится к драйверу zapret.</span>
+              <span data-lang="en"><strong>Antivirus removed <code>WinDivert</code> or <code>winws.exe</code>.</strong> Restore the file from quarantine and exclude <code>%LOCALAPPDATA%\Aeroway</code>. A detection named <code>Not-a-virus:RiskTool.Multi.WinDivert</code> is the zapret driver.</span>
+            </p>
+          </li>
+          <li class="card step" data-reveal>
+            <p class="step-no" aria-hidden="true">02</p>
+            <p>
+              <span data-lang="ru"><strong>Брандмауэр молча блокирует запуск.</strong> Разрешите <code>Aeroway.exe</code> и <code>zapret\bin\winws.exe</code> для частной и публичной сети.</span>
+              <span data-lang="en"><strong>The firewall blocks startup quietly.</strong> Allow <code>Aeroway.exe</code> and <code>zapret\bin\winws.exe</code> on private and public networks.</span>
+            </p>
+          </li>
+          <li class="card step" data-reveal>
+            <p class="step-no" aria-hidden="true">03</p>
+            <p>
+              <span data-lang="ru"><strong>Сайты всё ещё не открываются.</strong> Смените стратегию или обновите Flowseal в разделе «Сервис».</span>
+              <span data-lang="en"><strong>Sites still do not open.</strong> Change the strategy or update Flowseal in Service.</span>
+            </p>
+          </li>
+          <li class="card step" data-reveal>
+            <p class="step-no" aria-hidden="true">04</p>
+            <p>
+              <span data-lang="ru"><strong>Окно не открывается.</strong> Поставьте последнюю версию со <a href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">страницы релизов</a>.</span>
+              <span data-lang="en"><strong>The window does not open.</strong> Install the latest build from the <a href="https://github.com/RaccoonLaptop/Aeroway/releases/latest">releases page</a>.</span>
+            </p>
+          </li>
         </ol>
       </section>
 
-      <section class="panel" data-panel="files">
-        <h2>Files and removal</h2>
-        <p>After installation the app is in <code>%LOCALAPPDATA%\Aeroway</code>, usually <code>C:\Users\&lt;name&gt;\AppData\Local\Aeroway</code>. The engine is <code>zapret\bin\winws.exe</code>.</p>
-        <p>Remove it from Apps &amp; features under the name <strong>Aeroway</strong>. The shortcut and icon use that name too.</p>
-        <p>If Windows says <code>WinDivert64.sys</code> is in use, the driver is still loaded. Stop the bypass, then in an administrator PowerShell window:</p>
-        <pre><code>sc.exe stop WinDivert
+      <section class="section" id="files">
+        <div class="section-head" data-reveal>
+          <p class="kicker">07</p>
+          <h2><span data-lang="ru">Файлы и удаление</span><span data-lang="en">Files and removal</span></h2>
+        </div>
+        <article class="card" data-reveal>
+          <p>
+            <span data-lang="ru">После установки программа лежит в <code>%LOCALAPPDATA%\Aeroway</code>. Обычно это <code>C:\Users\&lt;имя&gt;\AppData\Local\Aeroway</code>. Движок — в <code>zapret\bin\winws.exe</code>.</span>
+            <span data-lang="en">After installation the app is in <code>%LOCALAPPDATA%\Aeroway</code>, usually <code>C:\Users\&lt;name&gt;\AppData\Local\Aeroway</code>. The engine is <code>zapret\bin\winws.exe</code>.</span>
+          </p>
+          <p>
+            <span data-lang="ru">Удаление — через «Приложения и возможности», имя <strong>Aeroway</strong>. Ярлык и иконка тоже от Aeroway.</span>
+            <span data-lang="en">Remove it from Apps &amp; features under the name <strong>Aeroway</strong>. The shortcut and icon use that name too.</span>
+          </p>
+          <p>
+            <span data-lang="ru">Если при удалении папки Windows пишет, что занят <code>WinDivert64.sys</code>, драйвер ещё загружен. Остановите обход, затем в PowerShell от администратора:</span>
+            <span data-lang="en">If Windows says <code>WinDivert64.sys</code> is in use, the driver is still loaded. Stop the bypass, then in an administrator PowerShell window:</span>
+          </p>
+          <pre><code>sc.exe stop WinDivert
 sc.exe delete WinDivert</code></pre>
-        <p>In PowerShell the command must be <code>sc.exe</code>. After that the file no longer locks the folder.</p>
+          <p>
+            <span data-lang="ru">В PowerShell нужна именно команда <code>sc.exe</code>. После этого файл отпускает папку.</span>
+            <span data-lang="en">In PowerShell the command must be <code>sc.exe</code>. After that the file no longer locks the folder.</span>
+          </p>
+        </article>
       </section>
     </div>
-    </div>
+  </main>
 
-    <footer>
-      <p>Aeroway by Niko · <a href="https://github.com/RaccoonLaptop/Aeroway">GitHub</a> · <a href="https://t.me/AerowayUI">Telegram</a> · <a href="donate.html">Донат</a> · <a href="https://github.com/bol-van/zapret">zapret</a> · <a href="https://github.com/Flowseal/zapret-discord-youtube">Flowseal</a></p>
-      <p>v2.0.2</p>
-    </footer>
-  </div>
-  <script>
-    var currentPanel = 'start';
-    var currentLang = 'ru';
+  <footer class="site-footer wrap">
+    <p>Aeroway by Niko · <a href="https://github.com/RaccoonLaptop/Aeroway">GitHub</a> · <a href="https://t.me/AerowayUI">Telegram</a> · <a href="donate.html"><span data-lang="ru">Донат</span><span data-lang="en">Donate</span></a> · <a href="https://github.com/bol-van/zapret">zapret</a> · <a href="https://github.com/Flowseal/zapret-discord-youtube">Flowseal</a></p>
+    <!-- Version from Aeroway.csproj -->
+    <p><span class="visually-hidden" data-lang="ru">Версия </span><span class="visually-hidden" data-lang="en">Version </span>v2.1.18</p>
+  </footer>
 
-    function showPanel(lang, id) {
-      currentPanel = id;
-      var root = document.getElementById(lang + '-content');
-      var nav = document.getElementById(lang + '-nav');
-      root.querySelectorAll('.panel').forEach(function (panel) {
-        panel.classList.toggle('active', panel.dataset.panel === id);
-      });
-      nav.querySelectorAll('button').forEach(function (button) {
-        button.classList.toggle('active', button.dataset.panel === id);
-      });
-      if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
-    }
-
-    function setLang(lang) {
-      currentLang = lang;
-      document.documentElement.classList.toggle('lang-en', lang === 'en');
-      document.getElementById('ru-nav').style.display = lang === 'en' ? 'none' : 'flex';
-      document.getElementById('en-nav').style.display = lang === 'en' ? 'flex' : 'none';
-      document.getElementById('ru-content').style.display = lang === 'en' ? 'none' : 'block';
-      document.getElementById('en-content').style.display = lang === 'en' ? 'block' : 'none';
-      showPanel(lang, currentPanel);
-    }
-
-    document.querySelectorAll('.side button').forEach(function (button) {
-      button.addEventListener('click', function () {
-        showPanel(currentLang, button.dataset.panel);
-      });
-    });
-
-    var initial = (location.hash || '').replace('#', '');
-    if (document.querySelector('.panel[data-panel="' + initial + '"]')) currentPanel = initial;
-    showPanel('ru', currentPanel);
-  </script>
   <script src="wavy.js"></script>
+  <script src="motion.js"></script>
 </body>
 </html>

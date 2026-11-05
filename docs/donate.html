@@ -5,41 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Поддержать Aeroway</title>
   <meta name="description" content="Добровольная поддержка Aeroway через ЮKassa.">
+  <meta name="theme-color" content="#050b1b">
+  <meta name="google" content="notranslate">
   <link rel="icon" href="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png">
+  <link rel="stylesheet" href="site.css">
   <link rel="stylesheet" href="https://yookassa.ru/integration/simplepay/css/yookassa_construct_form.css?v=1.35.0">
   <style>
-    :root {
-      --bg: #050b1b;
-      --surface: #0d2240;
-      --surface-light: #12355b;
-      --border: #2a4d73;
-      --accent: #e0b240;
-      --accent-hover: #f0cc62;
-      --text: #f4e7c6;
-      --muted: #c9b896;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      font-size: 15px;
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { color: var(--accent-hover); text-decoration: underline; }
-    .wrap { max-width: 480px; margin: 0 auto; padding: 48px 20px 64px; }
-    header { text-align: center; margin-bottom: 28px; }
-    header img { width: 72px; height: 72px; border-radius: 18px; margin-bottom: 14px; }
-    h1 { font-size: 1.6rem; margin: 0 0 8px; font-weight: 650; }
-    .lead { color: var(--muted); margin: 0; }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 22px 22px 18px;
-    }
     .yoomoney-payment-form {
       max-width: none;
       margin: 0;
@@ -65,7 +36,7 @@
       font-size: 15px;
       padding: 0 14px;
     }
-    .yoomoney-payment-form .ym-input::placeholder { color: #6d7894; }
+    .yoomoney-payment-form .ym-input::placeholder { color: #a8b0c4; }
     .yoomoney-payment-form .ym-input:focus {
       outline: none;
       border-color: var(--accent);
@@ -100,12 +71,12 @@
       margin: 0;
       padding: 0 16px;
       border: 0;
-      border-radius: 10px;
+      border-radius: 999px;
       background: #e0b240;
       color: #050b1b;
       font-family: inherit;
       font-size: 15px;
-      font-weight: 650;
+      font-weight: 700;
       justify-content: center;
       align-items: center;
       gap: 8px;
@@ -134,17 +105,37 @@
       font-size: 13px;
       text-align: center;
     }
-    footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 28px; }
+    .donate-foot { padding-bottom: 36px; }
+    .donate-foot a:hover { text-decoration: underline; }
   </style>
+  <script>
+    document.documentElement.classList.add("js");
+    window.addEventListener("load", function () {
+      window.setTimeout(function () {
+        if (!document.documentElement.classList.contains("motion-ready")) {
+          document.documentElement.classList.add("motion-fallback");
+        }
+      }, 800);
+    });
+  </script>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <img src="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png" alt="Aeroway">
+  <header class="topbar">
+    <div class="topbar-row bar-inner">
+      <a class="brand" href="./">
+        <img src="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png" alt="" width="36" height="36">
+        Aeroway
+      </a>
+      <a class="btn btn-ghost" href="./">К руководству</a>
+    </div>
+  </header>
+  <main class="narrow" data-stagger>
+    <header class="center-head" data-reveal>
+      <img class="mark" src="https://raw.githubusercontent.com/RaccoonLaptop/Aeroway/main/Assets/icon-readme.png" alt="Aeroway" width="76" height="76">
       <h1>Поддержать Aeroway</h1>
-      <p class="lead">Сумму выбираете сами. Оплата откроется на странице ЮKassa.</p>
+      <p class="lede" style="margin-inline:auto">Сумму выбираете сами. Оплата откроется на странице ЮKassa.</p>
     </header>
-    <div class="card">
+    <div class="pay-card" data-reveal style="margin-top:22px">
       <form class="yoomoney-payment-form" action="https://yookassa.ru/integration/simplepay/payment" method="post" accept-charset="utf-8">
         <div class="ym-products ym-display-none">
           <div class="ym-product">
@@ -184,12 +175,12 @@
       </form>
       <p class="note">Деньги приходят в ЮKassa. Это добровольная поддержка, без подписки.</p>
     </div>
-    <footer>
+    <footer class="site-footer donate-foot">
       <a href="./">К руководству</a>
       · <a href="https://github.com/RaccoonLaptop/Aeroway">GitHub</a>
       · <a href="https://t.me/AerowayUI">Telegram</a>
     </footer>
-  </div>
+  </main>
   <script src="https://yookassa.ru/integration/simplepay/js/yookassa_construct_form.js?v=1.35.0"></script>
   <script>
     const form = document.querySelector(".yoomoney-payment-form");
@@ -213,5 +204,6 @@
     });
   </script>
   <script src="wavy.js"></script>
+  <script src="motion.js"></script>
 </body>
 </html>

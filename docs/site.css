@@ -512,7 +512,7 @@ html.js [data-reveal] {
 }
 
 html.js [data-reveal].is-in {
-  animation: assemble 1.05s var(--ease-out) both;
+  animation: assemble 1.15s var(--ease-out) both;
   transform-origin: 50% 100%;
 }
 

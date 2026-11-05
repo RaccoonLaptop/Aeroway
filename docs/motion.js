@@ -149,7 +149,7 @@
         show(entry.target);
         observer.unobserve(entry.target);
       });
-    }, { rootMargin: "0px 0px -24% 0px", threshold: 0 });
+    }, { rootMargin: "0px 0px -36% 0px", threshold: 0 });
     reveals.forEach(function (el) { observer.observe(el); });
   }
 

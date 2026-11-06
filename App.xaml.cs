@@ -76,6 +76,7 @@ public partial class App : Application
 
         var zapretRoot = ZapretPaths.DetectRoot(settings.ZapretRoot);
         BundledStrategiesService.DeployTo(zapretRoot);
+        WinDivertHideService.TryReconcile(new ZapretPaths(zapretRoot), settings.HideWinDivert);
 
         var main = new MainWindow(StartupArgs.StartInTray);
         MainWindow = main;

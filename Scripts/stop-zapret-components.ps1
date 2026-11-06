@@ -9,7 +9,7 @@ if ($zapret) {
     sc.exe delete zapret | Out-Null
 }
 
-foreach ($name in @('WinDivert', 'WinDivert14')) {
+foreach ($name in @('WinDivert', 'WinDivert14', 'Monkey')) {
     sc.exe stop $name 2>$null | Out-Null
     sc.exe delete $name 2>$null | Out-Null
 }

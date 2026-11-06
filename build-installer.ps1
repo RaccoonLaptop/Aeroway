@@ -55,6 +55,22 @@ Write-Host "Deploying bundled Flowseal to staging/zapret..." -ForegroundColor Cy
 if (Test-Path $stagingZapret) { Remove-Item $stagingZapret -Recurse -Force }
 Copy-Item -Path $bundledZapret -Destination $stagingZapret -Recurse -Force
 
+$bundledSets = Join-Path $Packaging "windivert"
+$stagingSets = Join-Path $StagingDir "windivert"
+foreach ($required in @(
+    "stock\WinDivert.dll",
+    "stock\WinDivert64.sys",
+    "hide\WinDivert.dll",
+    "hide\Monkey64.sys"
+)) {
+    if (-not (Test-Path (Join-Path $bundledSets $required))) {
+        Write-Error "WinDivert sets are incomplete. Expected packaging/windivert/$required"
+    }
+}
+Write-Host "Deploying stock and hide WinDivert sets to staging/windivert..." -ForegroundColor Cyan
+if (Test-Path $stagingSets) { Remove-Item $stagingSets -Recurse -Force }
+Copy-Item -Path $bundledSets -Destination $stagingSets -Recurse -Force
+
 $isccCandidates = @(
     (Join-Path $ProjectDir "tools\innosetup\ISCC.exe"),
     "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",

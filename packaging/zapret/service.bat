@@ -151,7 +151,10 @@ call :test_service zapret
 call :test_service WinDivert
 
 set "BIN_PATH=%~dp0bin\"
-if not exist "%BIN_PATH%\*.sys" (
+if exist "%BIN_PATH%Monkey64.sys" (
+    call :test_service Monkey
+)
+if not exist "%BIN_PATH%WinDivert64.sys" if not exist "%BIN_PATH%Monkey64.sys" (
     call :PrintRed "WinDivert64.sys file NOT found."
 )
 echo:
@@ -220,6 +223,8 @@ if !errorlevel!==0 (
 )
 net stop "WinDivert14" >nul 2>&1
 sc delete "WinDivert14" >nul 2>&1
+net stop "Monkey" >nul 2>&1
+sc delete "Monkey" >nul 2>&1
 
 pause
 goto menu
@@ -545,9 +550,14 @@ if defined OneDrive (
 )
 echo:
 
-:: WinDivert64.sys file
+:: WinDivert64.sys / Monkey64.sys file
 set "BIN_PATH=%~dp0bin\"
-if not exist "%BIN_PATH%\*.sys" (
+if exist "%BIN_PATH%Monkey64.sys" (
+    if not exist "%BIN_PATH%WinDivert64.sys" (
+        call :PrintGreen "[OK] WinDivert hide driver present (Monkey64.sys)"
+        echo:
+    )
+) else if not exist "%BIN_PATH%WinDivert64.sys" (
     call :PrintRed "WinDivert64.sys file NOT found."
     echo:
 )
@@ -651,6 +661,22 @@ if !winws_running! neq 0 if !windivert_running!==0 (
     echo:
 )
 
+:: Monkey (WinDivert hide) conflict
+sc query "Monkey" | findstr /I "RUNNING STOP_PENDING" > nul
+set "monkey_running=!errorlevel!"
+if !winws_running! neq 0 if !monkey_running!==0 (
+    call :PrintYellow "[?] winws.exe is not running but Monkey service is active. Attempting to delete Monkey..."
+    net stop "Monkey" >nul 2>&1
+    sc delete "Monkey" >nul 2>&1
+    sc query "Monkey" >nul 2>&1
+    if !errorlevel!==0 (
+        call :PrintRed "[X] Failed to delete Monkey. Check manually if any other bypass is using it."
+    ) else (
+        call :PrintGreen "[OK] Monkey successfully removed"
+    )
+    echo:
+)
+
 :: Conflicting bypasses
 set "conflicting_services=GoodbyeDPI discordfix_zapret winws1 winws2"
 set "found_any_conflict=0"
@@ -692,6 +718,8 @@ if !found_any_conflict!==1 (
         sc delete "WinDivert" >nul 2>&1
         net stop "WinDivert14" >nul 2>&1
         sc delete "WinDivert14" >nul 2>&1
+        net stop "Monkey" >nul 2>&1
+        sc delete "Monkey" >nul 2>&1
     )
     
     echo:

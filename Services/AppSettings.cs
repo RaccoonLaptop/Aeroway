@@ -26,6 +26,8 @@ public sealed class AppSettings
     public string Theme { get; set; } = "dark";
     /// <summary>Автозапуск: Aeroway в трее и последний выбранный пресет при входе в Windows.</summary>
     public bool StartUiOnLogin { get; set; }
+    /// <summary>Подменять WinDivert на пакет bol-van (служба Monkey). По умолчанию выключено.</summary>
+    public bool HideWinDivert { get; set; }
     /// <summary>Устарело: объединено с StartUiOnLogin.</summary>
     public bool StartBypassOnLogin { get; set; }
     public double? WindowWidth { get; set; }

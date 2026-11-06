@@ -143,6 +143,7 @@ public static class FlowsealReinstallService
             backup.TryRestore(target);
             BundledStrategiesService.DeployTo(target);
             backup.RestoreCustomStrategies(target);
+            WinDivertHideService.TryReconcile(new ZapretPaths(target), AppSettings.Load().HideWinDivert);
 
             if (installedStrategy is not null)
             {

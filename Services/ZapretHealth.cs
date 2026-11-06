@@ -11,10 +11,12 @@ public static class ZapretHealth
         var missing = new List<string>();
         if (!File.Exists(Path.Combine(paths.Bin, "winws.exe")))
             missing.Add("winws.exe");
-        if (!File.Exists(Path.Combine(paths.Bin, "WinDivert.dll")))
-            missing.Add("WinDivert.dll");
-        if (!File.Exists(Path.Combine(paths.Bin, "WinDivert64.sys")))
-            missing.Add("WinDivert64.sys");
+        if (!File.Exists(Path.Combine(paths.Bin, WinDivertHideService.DllFileName)))
+            missing.Add(WinDivertHideService.DllFileName);
+        var stockDriver = File.Exists(Path.Combine(paths.Bin, WinDivertHideService.StockDriverFileName));
+        var hideDriver = File.Exists(Path.Combine(paths.Bin, WinDivertHideService.HideDriverFileName));
+        if (!stockDriver && !hideDriver)
+            missing.Add(WinDivertHideService.StockDriverFileName);
         return missing;
     }
 

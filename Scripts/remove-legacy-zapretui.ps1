@@ -24,7 +24,7 @@ function Stop-Locked([string]$dir) {
 }
 
 function Remove-LegacyDrivers([string]$dir) {
-    foreach ($name in @('zapret', 'WinDivert', 'WinDivert14')) {
+    foreach ($name in @('zapret', 'WinDivert', 'WinDivert14', 'Monkey')) {
         $svc = Get-CimInstance Win32_Service -Filter "Name='$name'"
         if (-not $svc) { continue }
         $path = [string]$svc.PathName
@@ -45,7 +45,8 @@ function Remove-TreeForce([string]$path) {
 
 function Test-NeedsDriverRemoval([string]$dir) {
     if (Test-Path -LiteralPath (Join-Path $dir 'zapret\bin\WinDivert64.sys')) { return $true }
-    foreach ($name in @('zapret', 'WinDivert', 'WinDivert14')) {
+    if (Test-Path -LiteralPath (Join-Path $dir 'zapret\bin\Monkey64.sys')) { return $true }
+    foreach ($name in @('zapret', 'WinDivert', 'WinDivert14', 'Monkey')) {
         $svc = Get-CimInstance Win32_Service -Filter "Name='$name'"
         if ($svc -and [string]$svc.PathName -and ([string]$svc.PathName).IndexOf($dir, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
             return $true

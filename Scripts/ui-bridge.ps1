@@ -155,7 +155,7 @@ function Stop-WinwsAndWinDivert {
         Start-Sleep -Milliseconds 200
     }
 
-    foreach ($n in @("WinDivert", "WinDivert14")) {
+    foreach ($n in @("WinDivert", "WinDivert14", "Monkey")) {
         $s = Get-Service -Name $n -ErrorAction SilentlyContinue
         if ($s -and $s.Status -eq 'Running') {
             sc.exe stop $n 2>$null | Out-Null
@@ -186,14 +186,20 @@ switch ($Action) {
             Write-Color "zapret service: NOT installed" Yellow
         }
 
-        foreach ($name in @("WinDivert")) {
+        $stockSys = Test-Path (Join-Path $BinPath "WinDivert64.sys")
+        $hideSys = Test-Path (Join-Path $BinPath "Monkey64.sys")
+        $driverServices = @("WinDivert")
+        if ($hideSys) { $driverServices += "Monkey" }
+        foreach ($name in $driverServices) {
             $s = Get-Service -Name $name -ErrorAction SilentlyContinue
             if ($s) { Write-Color "$name service: $($s.Status)" $(if ($s.Status -eq 'Running') { 'Green' } else { 'Yellow' }) }
+            elseif ($name -eq "WinDivert" -and $hideSys -and -not $stockSys) { Write-Color "WinDivert service: hidden (Monkey)" Cyan }
             else { Write-Color "$name service: NOT installed" Yellow }
         }
 
-        $sys = Get-ChildItem $BinPath -Filter "*.sys" -ErrorAction SilentlyContinue
-        if (-not $sys) { Write-Color "WinDivert64.sys NOT found!" Red }
+        if ($hideSys -and -not $stockSys) { Write-Color "Monkey64.sys (WinDivert hide) present" Green }
+        elseif ($stockSys) { Write-Color "WinDivert64.sys present" Green }
+        else { Write-Color "WinDivert64.sys NOT found!" Red }
 
         $winws = Get-Process winws -ErrorAction SilentlyContinue
         if ($winws) { Write-Color "Bypass (winws.exe) is RUNNING" Green }
@@ -335,9 +341,12 @@ switch ($Action) {
             Write-Color "[OK] OneDrive check passed" Green
         }
 
-        $sys = Get-ChildItem $BinPath -Filter "*.sys" -ErrorAction SilentlyContinue
-        if (-not $sys) { Write-Color "[X] WinDivert64.sys file NOT found." Red }
-        else { Write-Color "[OK] WinDivert driver present" Green }
+        $dllPresent = Test-Path (Join-Path $BinPath "WinDivert.dll")
+        $stockSys = Test-Path (Join-Path $BinPath "WinDivert64.sys")
+        $hideSys = Test-Path (Join-Path $BinPath "Monkey64.sys")
+        if ($dllPresent -and $hideSys -and -not $stockSys) { Write-Color "[OK] WinDivert hide driver present (Monkey64.sys)" Green }
+        elseif ($dllPresent -and $stockSys) { Write-Color "[OK] WinDivert driver present" Green }
+        else { Write-Color "[X] WinDivert64.sys file NOT found." Red }
 
         $vpnServices = @(Get-Service | Where-Object {
             $_.Name -like "*VPN*" -or $_.DisplayName -like "*VPN*" -or
@@ -409,6 +418,19 @@ switch ($Action) {
             }
         }
 
+        $monkey = Get-Service Monkey -ErrorAction SilentlyContinue
+        $monkeyActive = $monkey -and ($monkey.Status -in @('Running', 'StopPending'))
+        if (-not $winwsRunning -and $monkeyActive) {
+            Write-Color "[?] winws.exe is not running but Monkey service is active. Attempting to delete Monkey..." Yellow
+            sc.exe stop Monkey 2>$null | Out-Null
+            sc.exe delete Monkey 2>$null | Out-Null
+            if (Get-Service Monkey -ErrorAction SilentlyContinue) {
+                Write-Color "[X] Failed to delete Monkey. Check manually if any other bypass is using it." Red
+            } else {
+                Write-Color "[OK] Monkey successfully removed" Green
+            }
+        }
+
         $conflicts = @("GoodbyeDPI", "discordfix_zapret", "winws1", "winws2") | Where-Object {
             Get-Service $_ -ErrorAction SilentlyContinue
         }
@@ -421,7 +443,7 @@ switch ($Action) {
                 if ($LASTEXITCODE -eq 0) { Write-Color "[OK] Successfully removed service: $c" Green }
                 else { Write-Color "[X] Failed to remove service: $c" Red }
             }
-            foreach ($n in @("WinDivert", "WinDivert14")) {
+            foreach ($n in @("WinDivert", "WinDivert14", "Monkey")) {
                 sc.exe stop $n 2>$null | Out-Null
                 sc.exe delete $n 2>$null | Out-Null
             }

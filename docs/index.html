@@ -238,7 +238,7 @@
           </li>
           <li class="card" data-reveal>
             <h3><span data-lang="ru">Сервис</span><span data-lang="en">Service</span></h3>
-            <p><span data-lang="ru">Game Filter, IPSet, язык, обновления</span><span data-lang="en">Game filter, IPSet, language, updates</span></p>
+            <p><span data-lang="ru">Game Filter, IPSet, скрытие WinDivert, язык, обновления</span><span data-lang="en">Game filter, IPSet, WinDivert hide, language, updates</span></p>
           </li>
           <li class="card" data-reveal>
             <h3><span data-lang="ru">Консоль</span><span data-lang="en">Console</span></h3>
@@ -285,6 +285,13 @@
           <li class="card" data-reveal>
             <h3><span data-lang="ru">Фон главной</span><span data-lang="en">Home background</span></h3>
             <p><strong>Wavy</strong></p>
+          </li>
+          <li class="card" data-reveal>
+            <h3>WinDivert</h3>
+            <p>
+              <span data-lang="ru"><strong>скрытие выключено</strong>. Тумблер «Скрыть WinDivert от античита» в разделе «Сервис» подставляет пакет bol-van: служба <code>Monkey</code> и файл <code>Monkey64.sys</code>. Это помогает, только если античит ищет службу <code>WinDivert</code> или файл <code>WinDivert64.sys</code>. Имя устройства остаётся WinDivert, бан всё ещё возможен.</span>
+              <span data-lang="en"><strong>hide is off</strong>. The “Hide WinDivert from anticheat” switch in Service installs the bol-van package: service <code>Monkey</code> and file <code>Monkey64.sys</code>. It only helps when an anticheat looks for the <code>WinDivert</code> service or <code>WinDivert64.sys</code>. The device name stays WinDivert, so a ban is still possible.</span>
+            </p>
           </li>
         </ul>
       </section>
@@ -341,11 +348,13 @@
             <span data-lang="en">Remove it from Apps &amp; features under the name <strong>Aeroway</strong>. The shortcut and icon use that name too.</span>
           </p>
           <p>
-            <span data-lang="ru">Если при удалении папки Windows пишет, что занят <code>WinDivert64.sys</code>, драйвер ещё загружен. Остановите обход, затем в PowerShell от администратора:</span>
-            <span data-lang="en">If Windows says <code>WinDivert64.sys</code> is in use, the driver is still loaded. Stop the bypass, then in an administrator PowerShell window:</span>
+            <span data-lang="ru">Если при удалении папки Windows пишет, что занят <code>WinDivert64.sys</code> или <code>Monkey64.sys</code>, драйвер ещё загружен. Остановите обход, затем в PowerShell от администратора. Вторая пара команд нужна, только если включали скрытие WinDivert:</span>
+            <span data-lang="en">If Windows says <code>WinDivert64.sys</code> or <code>Monkey64.sys</code> is in use, the driver is still loaded. Stop the bypass, then in an administrator PowerShell window. The second pair is only needed if WinDivert hide was turned on:</span>
           </p>
           <pre><code>sc.exe stop WinDivert
-sc.exe delete WinDivert</code></pre>
+sc.exe delete WinDivert
+sc.exe stop Monkey
+sc.exe delete Monkey</code></pre>
           <p>
             <span data-lang="ru">В PowerShell нужна именно команда <code>sc.exe</code>. После этого файл отпускает папку.</span>
             <span data-lang="en">In PowerShell the command must be <code>sc.exe</code>. After that the file no longer locks the folder.</span>

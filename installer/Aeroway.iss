@@ -70,6 +70,7 @@ Filename: "{app}\Aeroway.exe"; Description: "Запустить Aeroway"; Flags:
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\zapret"
+Type: filesandordirs; Name: "{app}\windivert"
 Type: filesandordirs; Name: "{app}\Assets"
 Type: filesandordirs; Name: "{app}\Scripts"
 Type: files; Name: "{app}\settings.json"

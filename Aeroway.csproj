@@ -94,6 +94,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>packaging\zapret\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </None>
+    <None Update="packaging\windivert\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>packaging\windivert\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

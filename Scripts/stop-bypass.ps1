@@ -11,7 +11,7 @@ function Stop-BypassForUpdate {
         Start-Sleep -Milliseconds 200
     }
 
-    foreach ($name in @('WinDivert', 'WinDivert14')) {
+    foreach ($name in @('WinDivert', 'WinDivert14', 'Monkey')) {
         $svc = Get-Service -Name $name -ErrorAction SilentlyContinue
         if (-not $svc -or $svc.Status -ne 'Running') { continue }
 

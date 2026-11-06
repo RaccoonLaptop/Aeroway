@@ -44,6 +44,9 @@ public partial class ServicePage : UserControl
     private Button _ipsetNoneBtn = null!;
     private Button _ipsetAnyBtn = null!;
     private TextBlock _componentStatus = null!;
+    private ToggleButton _hideToggle = null!;
+    private TextBlock _hideMismatch = null!;
+    private bool _hideGuard;
 
     public ServicePage(ZapretPaths paths, StrategyService strategy, AppSettings settings)
     {
@@ -144,6 +147,54 @@ public partial class ServicePage : UserControl
 
         setCard.Child = setStack;
         root.Children.Add(setCard);
+
+        root.Children.Add(Section(Loc.T("service.section_windivert")));
+        var divertCard = Card();
+        var divertStack = new StackPanel();
+        var hideRow = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+        hideRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        hideRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var hideLabel = new TextBlock
+        {
+            Text = Loc.T("service.windivert_hide"),
+            FontSize = 15,
+            FontWeight = FontWeights.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 12, 0)
+        };
+        Grid.SetColumn(hideLabel, 0);
+        _hideToggle = new ToggleButton
+        {
+            Style = (Style)Application.Current.FindResource("SwitchToggle"),
+            IsChecked = _settings.HideWinDivert,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(_hideToggle, 1);
+        _hideToggle.Checked += async (_, _) => await SetWinDivertHideAsync(true);
+        _hideToggle.Unchecked += async (_, _) => await SetWinDivertHideAsync(false);
+        hideRow.Children.Add(hideLabel);
+        hideRow.Children.Add(_hideToggle);
+        divertStack.Children.Add(hideRow);
+        divertStack.Children.Add(new TextBlock
+        {
+            Text = Loc.T("service.windivert_hide_hint"),
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = (Brush)Application.Current.FindResource("TextMutedBrush"),
+            FontSize = 12
+        });
+        _hideMismatch = new TextBlock
+        {
+            Text = Loc.T("service.windivert_hide_mismatch"),
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 12,
+            Margin = new Thickness(0, 8, 0, 0),
+            Visibility = Visibility.Collapsed
+        };
+        _hideMismatch.SetResourceReference(TextBlock.ForegroundProperty, "WarningBrush");
+        divertStack.Children.Add(_hideMismatch);
+        divertCard.Child = divertStack;
+        root.Children.Add(divertCard);
 
         root.Children.Add(Section(Loc.T("service.section_hosts")));
         var hostsCard = Card();
@@ -374,6 +425,42 @@ public partial class ServicePage : UserControl
 
         scroll.Content = root;
         Content = scroll;
+    }
+
+    private async Task SetWinDivertHideAsync(bool enabled)
+    {
+        if (_hideGuard)
+            return;
+
+        var sets = WinDivertHideService.ResolveSetsDirectory(_paths.Root);
+        if (enabled == _settings.HideWinDivert && !WinDivertHideService.NeedsApply(_paths.Bin, sets, enabled))
+            return;
+
+        _hideToggle.IsEnabled = false;
+        try
+        {
+            await UiHelpers.RunWithLoadingAsync(
+                OwnerWindow,
+                Loc.T("common.loading"),
+                () => WinDivertHideService.ApplyAsync(_paths, enabled));
+            _settings.HideWinDivert = enabled;
+            _settings.Save();
+            UiHelpers.ShowInfo(
+                Loc.T(enabled ? "service.windivert_hide_on" : "service.windivert_hide_off"),
+                OwnerWindow);
+            RefreshStatuses();
+        }
+        catch (Exception ex)
+        {
+            _hideGuard = true;
+            _hideToggle.IsChecked = _settings.HideWinDivert;
+            _hideGuard = false;
+            UiHelpers.ShowError(ex.Message, OwnerWindow);
+        }
+        finally
+        {
+            _hideToggle.IsEnabled = true;
+        }
     }
 
     private async Task CheckAppUpdateAsync()
@@ -1065,6 +1152,10 @@ public partial class ServicePage : UserControl
         ApplyActiveStyle(_ipsetLoadedBtn, ipsetMode == "loaded");
         ApplyActiveStyle(_ipsetNoneBtn, ipsetMode == "none");
         ApplyActiveStyle(_ipsetAnyBtn, ipsetMode == "any");
+
+        var sets = WinDivertHideService.ResolveSetsDirectory(_paths.Root);
+        var hideMismatch = WinDivertHideService.NeedsApply(_paths.Bin, sets, _settings.HideWinDivert);
+        _hideMismatch.Visibility = hideMismatch ? Visibility.Visible : Visibility.Collapsed;
 
         var missing = ZapretHealth.MissingFiles(_paths);
         if (missing.Count == 0)
